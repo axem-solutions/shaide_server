@@ -43,6 +43,7 @@ Additional validation details:
 - [ ] I added or updated tests for changed behavior, or explained why tests are not needed.
 - [ ] I updated user-facing and API documentation where necessary.
 - [ ] My commits follow the Conventional Commits specification.
+- [ ] Every commit includes a `Signed-off-by` trailer (`git commit -s`).
 
 ## Screenshots
 
