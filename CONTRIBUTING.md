@@ -8,6 +8,9 @@ By participating, you agree to follow the axem
 ## Before you start
 
 - Read and understand the documentation.
+- Read and follow the
+  [policy for AI-assisted contributions](.github/AI_POLICY.md). Disclose any AI
+  assistance as described in the policy.
 - Search the [existing issues](https://github.com/axem-solutions/shaide_server/issues)
   before opening a new one.
 - Do not open a public issue for a suspected security vulnerability. Report it
