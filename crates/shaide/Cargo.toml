@@ -64,6 +64,11 @@ version = "*"
 insta = { workspace = true, features = ["yaml", "redactions"] }
 serial_test = { workspace = true }
 temp_testdir = { workspace = true }
+# The integration-test harness: `oneshot` drives the router without a socket, and the ephemeral-port
+# mode needs an HTTP client that can read a response body as it streams.
+tower = { version = "0.5.3", features = ["util"] }
+tokio = { workspace = true, features = ["macros", "net", "rt-multi-thread"] }
+reqwest = { workspace = true, features = ["json", "stream"] }
 
 [package.metadata.cargo-machete]
 ignored = ["openssl"]
