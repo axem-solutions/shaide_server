@@ -15,7 +15,7 @@ use shaide_db::{
 
 use crate::{
     error::ShaideError,
-    middlewares::{Principal, authorize_admin::Admin},
+    middlewares::{Admin, Authenticated},
 };
 
 #[utoipa::path(
@@ -26,7 +26,7 @@ use crate::{
     security(("bearer_token" = []))
 )]
 pub async fn list_models(
-    _principal: Principal,
+    _authenticated: Authenticated,
     State(db): State<DbConn>,
 ) -> Result<Json<ListModelsResponse>, ShaideError> {
     let models = db.list_models().await?;
@@ -125,7 +125,7 @@ pub async fn set_model_limits(
     security(("bearer_token" = []))
 )]
 pub async fn list_embedding_models(
-    _principal: Principal,
+    _authenticated: Authenticated,
     State(db): State<DbConn>,
 ) -> Result<Json<ListEmbeddingModelsResponse>, ShaideError> {
     let models = db.list_embedding_models().await?;
@@ -218,7 +218,7 @@ mod tests {
     use temp_testdir::TempDir;
 
     use super::create_models;
-    use crate::middlewares::authorize_admin::Admin;
+    use crate::middlewares::Admin;
 
     fn create_model_request(name: &str, reasoning_effort_values: &[&str]) -> CreateModelRequest {
         CreateModelRequest {

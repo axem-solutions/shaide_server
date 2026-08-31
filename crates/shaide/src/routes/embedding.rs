@@ -7,7 +7,7 @@ use tracing::debug;
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_user::AuthUser,
+    middlewares::AuthUser,
     providers::{
         azure::get_azure_client, gcp::get_gcp_client, shaide::get_axem_client,
         vector_db::get_vector_db,

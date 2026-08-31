@@ -9,7 +9,7 @@ use shaide_common::{
 use shaide_db::DbConn;
 use tokio::fs::{self};
 
-use crate::{error::ShaideError, middlewares::authorize_admin::Admin};
+use crate::{error::ShaideError, middlewares::Admin};
 
 #[utoipa::path(
     get,

@@ -4,6 +4,7 @@ use argon2::{
     Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
     password_hash::{Error as PasswordHashError, SaltString},
 };
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode, get_current_timestamp,
 };
@@ -79,17 +80,32 @@ impl AuthService {
         }
     }
 
-    pub fn issue_access_token(&self, user_id: i64) -> Result<String, ShaideError> {
+    pub fn issue_access_token(
+        &self,
+        user_id: i64,
+        account_expiry: Option<DateTime<Utc>>,
+    ) -> Result<(String, u64), ShaideError> {
         let issued_at = get_current_timestamp();
+        let expires_at = account_expiry
+            .map(|expiry| {
+                u64::try_from(expiry.timestamp()).map_err(|_| {
+                    ShaideError::internal_server_error("Invalid account expiry".to_owned())
+                })
+            })
+            .transpose()?
+            .map_or(issued_at + Self::TOKEN_LIFETIME_SECONDS, |expiry| {
+                expiry.min(issued_at + Self::TOKEN_LIFETIME_SECONDS)
+            });
         let claims = UserClaims {
             sub: user_id.to_string(),
             iss: JWT_ISSUER.to_owned(),
             aud: JWT_AUDIENCE.to_owned(),
             iat: issued_at,
-            exp: issued_at + Self::TOKEN_LIFETIME_SECONDS,
+            exp: expires_at,
         };
-        encode(&Header::new(Algorithm::HS256), &claims, &self.encoding_key)
-            .map_err(|error| ShaideError::internal_server_error(error.to_string()))
+        let token = encode(&Header::new(Algorithm::HS256), &claims, &self.encoding_key)
+            .map_err(|error| ShaideError::internal_server_error(error.to_string()))?;
+        Ok((token, expires_at.saturating_sub(issued_at)))
     }
 
     pub fn validate_access_token(&self, token: &str) -> Result<i64, ShaideError> {
