@@ -1,0 +1,31 @@
+[package]
+name = "shaide-db"
+version.workspace = true
+edition.workspace = true
+
+
+
+[features]
+testutils = []
+
+[dependencies]
+anyhow.workspace = true
+chrono = { workspace = true, features = ["serde"] }
+serde_json.workspace = true
+tokio = { workspace = true, features = ["fs", "macros", "rt-multi-thread"] }
+sqlx = { workspace = true, features = [
+    "sqlite",
+    "chrono",
+    "runtime-tokio",
+    "macros",
+    "json",
+] }
+thiserror.workspace = true
+tracing.workspace = true
+shaide-common = { path = "../shaide-common" }
+
+[dev-dependencies]
+color-eyre = "0.6.5"
+temp_testdir = { workspace = true }
+tokio = { workspace = true, features = ["macros", "process"] }
+tracing-subscriber = { workspace = true }
