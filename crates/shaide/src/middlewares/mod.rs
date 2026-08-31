@@ -1,14 +1,18 @@
 pub mod error_response;
 
 use axum::{
-    body::{Body, to_bytes},
+    body::Body,
     extract::{FromRequestParts, Request},
     http::HeaderValue,
     middleware::Next,
     response::Response,
 };
 use chrono::Utc;
-use http::{HeaderMap, header::AUTHORIZATION, request::Parts};
+use http::{
+    HeaderMap,
+    header::{AUTHORIZATION, CONTENT_LENGTH},
+    request::Parts,
+};
 use shaide_db::{DbConn, Role, UserDAO, api_usage::InsertApiUsageDao};
 use tracing::{debug, error};
 
@@ -46,37 +50,30 @@ pub async fn forward_headers_middleware(mut request: Request<Body>, next: Next) 
 pub async fn logging_middleware(request: Request<Body>, next: Next) -> Response<Body> {
     let method = request.method().clone();
     let uri = request.uri().clone();
+    let content_length = request
+        .headers()
+        .get(CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.parse::<u64>().ok());
 
-    let (parts, body) = request.into_parts();
-    let bytes = to_bytes(body, usize::MAX).await.unwrap();
-    if uri != "/" {
-        if let Ok(body) = String::from_utf8(bytes.to_vec()) {
-            debug!(
-                uri = uri.to_string(),
-                method = method.to_string(),
-                body = body,
-                "request received"
-            );
-        } else {
-            debug!(
-                uri = uri.to_string(),
-                method = method.to_string(),
-                "request received"
-            );
-        }
-    }
-    // Reconstruct the body here
-    let body = Body::from(bytes);
-    let request = Request::from_parts(parts, body);
-    let res = next.run(request).await;
     if uri != "/" {
         debug!(
-            method = method.to_string(),
-            uri = uri.to_string(),
+            %uri,
+            %method,
+            content_length,
+            "request received"
+        );
+    }
+    let response = next.run(request).await;
+    if uri != "/" {
+        debug!(
+            %method,
+            %uri,
+            status = %response.status(),
             "request served"
         );
     }
-    res
+    response
 }
 
 fn get_bearer_value(headers: &HeaderMap<HeaderValue>) -> Option<String> {
