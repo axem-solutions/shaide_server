@@ -6,18 +6,21 @@ use shaide_common::{
     api::logs::{LogFileContent, LogFilesResponse, LogsQuery},
     path::logs_dir,
 };
+use shaide_db::DbConn;
 use tokio::fs::{self};
 
-use crate::error::ShaideError;
+use crate::{error::ShaideError, middlewares::authorize_admin::Admin};
 
 #[utoipa::path(
     get,
     path = "/v1/logs",
     tag = "logs",
     params(LogsQuery),
-    responses((status = 200, description = "Log files", body = LogFilesResponse))
+    responses((status = 200, description = "Log files", body = LogFilesResponse)),
+    security(("bearer_token" = []))
 )]
 pub async fn logs_handler(
+    _admin: Admin,
     Query(LogsQuery {
         start_date,
         end_date,
@@ -55,6 +58,8 @@ pub async fn logs_handler(
     Ok(Json(response))
 }
 
-pub fn logs_router() -> Router {
-    Router::new().route("/v1/logs", routing::get(logs_handler))
+pub fn logs_router(db: DbConn) -> Router {
+    Router::new()
+        .route("/v1/logs", routing::get(logs_handler))
+        .with_state(db)
 }

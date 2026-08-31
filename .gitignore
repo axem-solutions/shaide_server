@@ -1,0 +1,18 @@
+/target
+node_modules
+.idea/
+.venv
+.DS_Store
+# .vscode/
+local/
+__pycache__
+.turbo
+build/
+
+# ignore cargo flamegraph temp files
+flamegraph.svg
+cargo-flamegraph.stacks
+
+server/shaide-webserver/ui/
+.env
+.codex

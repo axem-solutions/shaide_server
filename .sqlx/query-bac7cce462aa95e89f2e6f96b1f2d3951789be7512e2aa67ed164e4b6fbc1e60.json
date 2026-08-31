@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT \n                    id as \"id!\",\n                    total_input_token_count,\n                    total_output_token_count\n                FROM daily_usage_token WHERE\n                    user = ? AND\n                    model = ? AND\n                    date = ?;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "total_input_token_count",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "total_input_token_count"
+          }
+        }
+      },
+      {
+        "name": "total_output_token_count",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "total_output_token_count"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bac7cce462aa95e89f2e6f96b1f2d3951789be7512e2aa67ed164e4b6fbc1e60"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                    INSERT INTO daily_usage_token (date, user, model) \n                    VALUES (?, ?, ?)\n                    RETURNING id as \"id!\";\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a50cda14252d97f7fef6672a5b1258836bd83dcb3afba84c9f57317dc3c39b67"
+}

@@ -1,0 +1,278 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                id as \"id!\",\n                created_at as \"created_at!: DateTime<Utc>\",\n                updated_at as \"updated_at!: DateTime<Utc>\",\n                name as \"name: String\",\n                variant as \"variant: String\",\n                chat_completions_endpoint as \"chat_completions_endpoint: String\",\n                completions_endpoint,\n                responses_endpoint,\n                api_schema as \"api_schema: String\",\n                daily_input_token_limit,\n                daily_output_token_limit,\n                supports_images as \"supports_images: bool\",\n                reasoning_effort_values as \"reasoning_effort_values: String\",\n                max_images_per_request,\n                max_image_bytes,\n                max_image_width_px,\n                max_image_height_px,\n                max_generated_tokens as \"max_generated_tokens: i64\",\n                context_size as \"context_size: i64\",\n                platform,\n                native_fim_mode,\n                fim_prompt_template\n            FROM models WHERE name = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "created_at!: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "updated_at!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "name": "name: String",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "variant: String",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "variant"
+          }
+        }
+      },
+      {
+        "name": "chat_completions_endpoint: String",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "chat_completions_endpoint"
+          }
+        }
+      },
+      {
+        "name": "completions_endpoint",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "completions_endpoint"
+          }
+        }
+      },
+      {
+        "name": "responses_endpoint",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "responses_endpoint"
+          }
+        }
+      },
+      {
+        "name": "api_schema: String",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "api_schema"
+          }
+        }
+      },
+      {
+        "name": "daily_input_token_limit",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "daily_input_token_limit"
+          }
+        }
+      },
+      {
+        "name": "daily_output_token_limit",
+        "ordinal": 10,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "daily_output_token_limit"
+          }
+        }
+      },
+      {
+        "name": "supports_images: bool",
+        "ordinal": 11,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "supports_images"
+          }
+        }
+      },
+      {
+        "name": "reasoning_effort_values: String",
+        "ordinal": 12,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "reasoning_effort_values"
+          }
+        }
+      },
+      {
+        "name": "max_images_per_request",
+        "ordinal": 13,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "max_images_per_request"
+          }
+        }
+      },
+      {
+        "name": "max_image_bytes",
+        "ordinal": 14,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "max_image_bytes"
+          }
+        }
+      },
+      {
+        "name": "max_image_width_px",
+        "ordinal": 15,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "max_image_width_px"
+          }
+        }
+      },
+      {
+        "name": "max_image_height_px",
+        "ordinal": 16,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "max_image_height_px"
+          }
+        }
+      },
+      {
+        "name": "max_generated_tokens: i64",
+        "ordinal": 17,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "max_generated_tokens"
+          }
+        }
+      },
+      {
+        "name": "context_size: i64",
+        "ordinal": 18,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "context_size"
+          }
+        }
+      },
+      {
+        "name": "platform",
+        "ordinal": 19,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "platform"
+          }
+        }
+      },
+      {
+        "name": "native_fim_mode",
+        "ordinal": 20,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "native_fim_mode"
+          }
+        }
+      },
+      {
+        "name": "fim_prompt_template",
+        "ordinal": 21,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "fim_prompt_template"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "bacb74f5a90a54e169c51d4188c827a160d44b0a4c77a4bda1a5ae32f112088e"
+}

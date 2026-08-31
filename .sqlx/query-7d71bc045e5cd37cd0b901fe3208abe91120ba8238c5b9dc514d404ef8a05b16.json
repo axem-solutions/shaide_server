@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE api_usage SET model = ?, input_token_count = ?, output_token_count = ? where id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "7d71bc045e5cd37cd0b901fe3208abe91120ba8238c5b9dc514d404ef8a05b16"
+}

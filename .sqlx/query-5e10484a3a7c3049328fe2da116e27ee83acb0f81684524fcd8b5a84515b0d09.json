@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    daily_usage_token.date, \n                    daily_usage_token.user,\n                    daily_usage_token.model,\n                    daily_usage_token.total_input_token_count,\n                    daily_usage_token.total_output_token_count,\n                    models.name as \"model_name!: String\"\n                FROM daily_usage_token \n                LEFT JOIN models on daily_usage_token.model = models.id\n                WHERE daily_usage_token.date = ? and daily_usage_token.user = ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "date",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "date"
+          }
+        }
+      },
+      {
+        "name": "user",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "user"
+          }
+        }
+      },
+      {
+        "name": "model",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "model"
+          }
+        }
+      },
+      {
+        "name": "total_input_token_count",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "total_input_token_count"
+          }
+        }
+      },
+      {
+        "name": "total_output_token_count",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_token",
+            "name": "total_output_token_count"
+          }
+        }
+      },
+      {
+        "name": "model_name!: String",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "5e10484a3a7c3049328fe2da116e27ee83acb0f81684524fcd8b5a84515b0d09"
+}

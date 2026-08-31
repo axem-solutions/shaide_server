@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO api_usage (route, user) \n                VALUES (?, ?);\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e9a914e46fd368d119e58dab406677f49d5f76a8a0bde5602dde684a194537e1"
+}
