@@ -1,0 +1,5 @@
+[book]
+authors = ["Gabor Feher"]
+language = "en"
+src = "src"
+title = "Shaide Docs"

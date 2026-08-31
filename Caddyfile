@@ -1,0 +1,7 @@
+{
+  auto_https off
+}
+
+http://dashboard.vectordb.localhost {
+  reverse_proxy vectordb:6333
+}

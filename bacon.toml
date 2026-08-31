@@ -1,0 +1,7 @@
+default_job = "backend"
+
+[jobs.backend]
+command = ["cargo", "run"]
+need_stdout = true
+allow_warnings = true
+on_change_strategy = "kill_then_restart"

@@ -1,0 +1,9 @@
+[[production]]
+package = "shaide"
+bin = "shaide"
+reason = "published backend server binary"
+
+[[production]]
+package = "shaide-cli"
+bin = "shaide-cli"
+reason = "workspace CLI binary"

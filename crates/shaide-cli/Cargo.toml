@@ -1,0 +1,18 @@
+[package]
+name = "shaide-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde_json = { workspace = true }
+clap-markdown = "0.1.5"
+clap = { version = "4.5.60", features = ["derive"] } 
+serde = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+shaide-common = { path = "../shaide-common" }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+enum_dispatch = "0.3.13"
