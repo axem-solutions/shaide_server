@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO models (\n                name,\n                variant,\n                chat_completions_endpoint,\n                completions_endpoint,\n                responses_endpoint,\n                api_schema,\n                daily_input_token_limit,\n                daily_output_token_limit,\n                supports_images,\n                reasoning_effort_values,\n                max_images_per_request,\n                max_image_bytes,\n                max_image_width_px,\n                max_image_height_px,\n                max_generated_tokens,\n                context_size,\n                platform,\n                native_fim_mode,\n                fim_prompt_template\n            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 19
+    },
+    "nullable": []
+  },
+  "hash": "f46a0457e32b990752ad9f851c681a85070c5bfb331b697a2c34e5458ad55916"
+}

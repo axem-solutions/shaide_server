@@ -78,7 +78,7 @@ pub async fn api_router(health_state: Arc<HealthState>, db: DbConn) -> Router {
         .merge(crate::routes::vector_db::vector_db_router(db.clone()))
         .merge(crate::routes::statistics::statistics_router(db.clone()))
         .merge(crate::routes::mcp::mcp_user_routes(db.clone()).await)
-        .merge(crate::routes::logs::logs_router())
+        .merge(crate::routes::logs::logs_router(db.clone()))
         .merge(crate::openapi::openapi_router())
 }
 

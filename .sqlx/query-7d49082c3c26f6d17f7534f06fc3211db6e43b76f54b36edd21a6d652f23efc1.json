@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                id as \"id!\",\n                vector_size,\n                name as \"name: String\",\n                url as \"url: String\",\n                platform,\n                max_embedding_model_text_len\n            FROM embedding_models WHERE id= ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "vector_size",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "vector_size"
+          }
+        }
+      },
+      {
+        "name": "name: String",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "url: String",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "url"
+          }
+        }
+      },
+      {
+        "name": "platform",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "platform"
+          }
+        }
+      },
+      {
+        "name": "max_embedding_model_text_len",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "max_embedding_model_text_len"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "7d49082c3c26f6d17f7534f06fc3211db6e43b76f54b36edd21a6d652f23efc1"
+}

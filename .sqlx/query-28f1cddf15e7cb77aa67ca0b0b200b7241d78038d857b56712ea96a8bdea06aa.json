@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM embedding_models where id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "28f1cddf15e7cb77aa67ca0b0b200b7241d78038d857b56712ea96a8bdea06aa"
+}

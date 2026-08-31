@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT\n                id as \"id!\",\n                vector_size,\n                name as \"name: String\",\n                url as \"url: String\",\n                platform,\n                max_embedding_model_text_len\n            FROM embedding_models",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "vector_size",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "vector_size"
+          }
+        }
+      },
+      {
+        "name": "name: String",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "url: String",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "url"
+          }
+        }
+      },
+      {
+        "name": "platform",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "platform"
+          }
+        }
+      },
+      {
+        "name": "max_embedding_model_text_len",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "max_embedding_model_text_len"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "067dc6f211865301e83e45150a1a7897587b6fdab4ca267cf03d03edd3a88994"
+}

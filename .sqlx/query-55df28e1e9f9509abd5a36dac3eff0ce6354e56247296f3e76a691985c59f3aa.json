@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                UPDATE daily_usage_token\n                SET\n                    total_input_token_count = total_input_token_count + ?,\n                    total_output_token_count = total_output_token_count + ?\n                WHERE id = ?\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "55df28e1e9f9509abd5a36dac3eff0ce6354e56247296f3e76a691985c59f3aa"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE models SET daily_output_token_limit = ? WHERE name = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ea4d28e94a7305f6a32f319efc2439f1380d7d31863a659a0d44fd09ad5d9b73"
+}

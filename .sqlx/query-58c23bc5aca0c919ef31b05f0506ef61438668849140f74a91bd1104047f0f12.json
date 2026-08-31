@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    api_usage.route,\n                    api_usage.user,\n                    api_usage.request_made as \"request_made!: DateTime<Utc>\",\n                    api_usage.input_token_count,\n                    api_usage.output_token_count,\n                    models.name as \"model_name!: String\"\n                FROM api_usage \n                LEFT JOIN models on api_usage.model = models.id\n                WHERE api_usage.request_made >= date(?) AND api_usage.request_made <= date(?)\n                LIMIT ? OFFSET ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "route",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "api_usage",
+            "name": "route"
+          }
+        }
+      },
+      {
+        "name": "user",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "api_usage",
+            "name": "user"
+          }
+        }
+      },
+      {
+        "name": "request_made!: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "api_usage",
+            "name": "request_made"
+          }
+        }
+      },
+      {
+        "name": "input_token_count",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "api_usage",
+            "name": "input_token_count"
+          }
+        }
+      },
+      {
+        "name": "output_token_count",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "api_usage",
+            "name": "output_token_count"
+          }
+        }
+      },
+      {
+        "name": "model_name!: String",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "models",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "58c23bc5aca0c919ef31b05f0506ef61438668849140f74a91bd1104047f0f12"
+}
