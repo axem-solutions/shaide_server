@@ -15,7 +15,7 @@ use tracing::{debug, error};
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_user::AuthUser,
+    middlewares::AuthUser,
     providers::gcp::check_user_model_usage,
     services::responses::{ProviderResponse, create_response as create_provider_response},
 };

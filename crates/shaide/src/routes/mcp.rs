@@ -13,7 +13,7 @@ use shaide_db::DbConn;
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_user::AuthUser,
+    middlewares::AuthUser,
     services::mcp::{ResolvedMcpTarget, get_mcp_service},
 };
 

@@ -18,7 +18,7 @@ use shaide_db::{DbConn, api_usage::ApiUsersUsage, daily_usage::DailyUsageDaoWith
 
 use crate::{
     error::ShaideError,
-    middlewares::{authorize_admin::Admin, authorize_user::AuthUser},
+    middlewares::{Admin, AuthUser},
 };
 
 pub fn map_db_to_usage_statistics(

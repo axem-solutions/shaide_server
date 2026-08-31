@@ -23,7 +23,7 @@ use tracing::{debug, error};
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_user::AuthUser,
+    middlewares::AuthUser,
     providers::gcp::{check_user_model_usage, try_update_model_usage},
     services::chat::{collect_chat_completion, completion_stream},
 };

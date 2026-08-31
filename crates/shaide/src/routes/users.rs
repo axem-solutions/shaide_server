@@ -1,16 +1,16 @@
 use anyhow::Result;
 use axum::{Json, Router, extract::State, routing};
-use chrono::Utc;
+use chrono::{TimeZone, Utc};
 use shaide_common::api::users::{
     AccessTokenResponse, CreateUserRequest, CreateUserResponse, GenerateUsersRequest,
     GenerateUsersResponse, GeneratedUserResponse, ListUser, ListUsersResponse, LoginRequest,
 };
-use shaide_db::DbConn;
+use shaide_db::{DbConn, Role};
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_admin::Admin,
-    services::auth::{AuthService, get_auth_service},
+    middlewares::{AccessRequirement, Admin, ensure_access},
+    services::auth::get_auth_service,
 };
 
 #[utoipa::path(
@@ -75,12 +75,18 @@ pub async fn generate_users(
     Json(request): Json<GenerateUsersRequest>,
 ) -> Result<Json<GenerateUsersResponse>, ShaideError> {
     let mut new_users = vec![];
+    // Generated users historically behaved as non-expiring accounts. Keep that behavior until
+    // account expiry becomes nullable.
+    let expiry = Utc
+        .with_ymd_and_hms(9999, 12, 31, 23, 59, 59)
+        .single()
+        .expect("generated user expiry must be valid");
     for _ in 0..request.number_of_new_users {
         let username = uuid::Uuid::new_v4().to_string();
         let password = uuid::Uuid::new_v4().to_string();
         let password_hash = get_auth_service().hash_password(password.clone()).await?;
         let id = db
-            .create_user(username.clone(), password_hash, Utc::now())
+            .create_user(username.clone(), password_hash, expiry)
             .await?;
         new_users.push(GeneratedUserResponse {
             id,
@@ -108,13 +114,16 @@ pub async fn login(
     let user = db.get_user_by_username(&request.username).await?;
     let expiry = user.expiry;
     get_auth_service()
-        .verify_password(request.password, user.password_hash)
+        .verify_password(request.password, user.password_hash.clone())
         .await?;
-    let access_token = get_auth_service().issue_access_token(user.id)?;
+    ensure_access(&user, AccessRequirement::Any)?;
+    let account_expiry = (user.role == Role::User).then_some(user.expiry);
+    let (access_token, expires_in) =
+        get_auth_service().issue_access_token(user.id, account_expiry)?;
     Ok(Json(AccessTokenResponse {
         access_token,
         token_type: "Bearer".to_owned(),
-        expires_in: AuthService::TOKEN_LIFETIME_SECONDS,
+        expires_in,
         expiry,
     }))
 }

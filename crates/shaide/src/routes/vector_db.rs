@@ -7,7 +7,7 @@ use shaide_db::DbConn;
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_user::AuthUser,
+    middlewares::AuthUser,
     providers::vector_db::{RagCollectionParameters, get_vector_db},
     services::embedding::embed,
 };

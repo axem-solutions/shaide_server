@@ -9,7 +9,7 @@ use tracing::{debug, warn};
 
 use crate::{
     error::ShaideError,
-    middlewares::authorize_user::AuthUser,
+    middlewares::AuthUser,
     providers::{gcp::get_gcp_client, shaide::get_axem_client},
     services::completion::{
         Choice, CompletionError, CompletionRequest, CompletionResponse, render_fim_prompt,
