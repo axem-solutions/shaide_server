@@ -62,8 +62,8 @@ pub struct LoginRequest {
 pub struct AccessTokenResponse {
     pub access_token: String,
     pub token_type: String,
-    pub expires_in: u64,
+    pub token_expires_in: u64,
     #[schema(value_type = String, format = DateTime)]
-    pub expiry: DateTime<Utc>,
+    pub account_expires_at: DateTime<Utc>,
     pub role: String,
 }
