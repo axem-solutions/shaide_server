@@ -65,4 +65,5 @@ pub struct AccessTokenResponse {
     pub expires_in: u64,
     #[schema(value_type = String, format = DateTime)]
     pub expiry: DateTime<Utc>,
+    pub role: String,
 }

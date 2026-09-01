@@ -13,7 +13,7 @@ use http::{
     header::{AUTHORIZATION, CONTENT_LENGTH},
     request::Parts,
 };
-use shaide_db::{DbConn, Role, UserDAO, api_usage::InsertApiUsageDao};
+use shaide_db::{DbConn, UserDAO, UserRole, api_usage::InsertApiUsageDao};
 use tracing::{debug, error};
 
 use crate::{error::ShaideError, services::auth::get_auth_service};
@@ -119,8 +119,8 @@ pub(crate) fn ensure_access(
     requirement: AccessRequirement,
 ) -> Result<(), ShaideError> {
     let role_allowed = match requirement {
-        AccessRequirement::User => user.role == Role::User,
-        AccessRequirement::Admin => user.role == Role::Admin,
+        AccessRequirement::User => user.role == UserRole::User,
+        AccessRequirement::Admin => user.role == UserRole::Admin,
         AccessRequirement::Any => true,
     };
     if !role_allowed {
@@ -128,7 +128,7 @@ pub(crate) fn ensure_access(
             "Authenticated user does not have the required role".to_owned(),
         ));
     }
-    if user.role == Role::User && user.expiry <= Utc::now() {
+    if user.role == UserRole::User && user.expiry <= Utc::now() {
         return Err(ShaideError::unauthorized("Account has expired".to_owned()));
     }
     Ok(())
@@ -207,8 +207,8 @@ impl FromRequestParts<DbConn> for Authenticated {
         let authorized = authorize_request(parts, state, AccessRequirement::Any).await?;
         let user = authorized.user;
         match user.role {
-            Role::Admin => Ok(Authenticated::Admin),
-            Role::User => Ok(Authenticated::User),
+            UserRole::Admin => Ok(Authenticated::Admin),
+            UserRole::User => Ok(Authenticated::User),
         }
     }
 }

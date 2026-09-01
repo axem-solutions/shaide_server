@@ -10,7 +10,7 @@ use std::path::Path;
 use anyhow::Result;
 pub use models::{InsertModelDAO, ModelDAO};
 use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
-pub use users::{Role, UserDAO};
+pub use users::{UserDAO, UserRole};
 
 #[derive(Clone)]
 pub struct DbConn {

@@ -22,7 +22,7 @@ use axum_prometheus::PrometheusMetricLayer;
 use axum_reverse_proxy::ReverseProxy;
 use shaide_common::path::get_db_file;
 use shaide_db::{
-    DbConn, Role,
+    DbConn, UserRole,
     error::{Resource, ShaideDBError},
 };
 use tower_http::cors::CorsLayer;
@@ -49,7 +49,7 @@ async fn ensure_admin(
     auth_service: &AuthService,
 ) -> anyhow::Result<()> {
     match db.get_user_by_username(ADMIN_USERNAME).await {
-        Ok(user) if user.role == Role::Admin => Ok(()),
+        Ok(user) if user.role == UserRole::Admin => Ok(()),
         Ok(_) => anyhow::bail!("user named '{ADMIN_USERNAME}' exists but is not an admin"),
         Err(ShaideDBError::NotFound(Resource::User)) => {
             let password_hash = auth_service.hash_password(password.to_owned()).await?;

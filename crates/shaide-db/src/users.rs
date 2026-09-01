@@ -5,12 +5,12 @@ use super::DbConn;
 use crate::error::{Resource, ShaideDBError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Role {
+pub enum UserRole {
     User,
     Admin,
 }
 
-impl From<String> for Role {
+impl From<String> for UserRole {
     fn from(value: String) -> Self {
         match value.as_str() {
             "user" => Self::User,
@@ -20,12 +20,21 @@ impl From<String> for Role {
     }
 }
 
+impl From<UserRole> for String {
+    fn from(val: UserRole) -> Self {
+        match val {
+            UserRole::User => "user".into(),
+            UserRole::Admin => "admin".into(),
+        }
+    }
+}
+
 #[derive(FromRow, Debug, Clone)]
 pub struct UserDAO {
     pub id: i64,
     pub username: String,
     pub password_hash: String,
-    pub role: Role,
+    pub role: UserRole,
     pub expiry: DateTime<Utc>,
 }
 
