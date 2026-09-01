@@ -5,7 +5,7 @@ use shaide_common::api::users::{
     AccessTokenResponse, CreateUserRequest, CreateUserResponse, GenerateUsersRequest,
     GenerateUsersResponse, GeneratedUserResponse, ListUser, ListUsersResponse, LoginRequest,
 };
-use shaide_db::{DbConn, Role};
+use shaide_db::{DbConn, UserRole};
 
 use crate::{
     error::ShaideError,
@@ -117,7 +117,7 @@ pub async fn login(
         .verify_password(request.password, user.password_hash.clone())
         .await?;
     ensure_access(&user, AccessRequirement::Any)?;
-    let account_expiry = (user.role == Role::User).then_some(user.expiry);
+    let account_expiry = (user.role == UserRole::User).then_some(user.expiry);
     let (access_token, expires_in) =
         get_auth_service().issue_access_token(user.id, account_expiry)?;
     Ok(Json(AccessTokenResponse {
@@ -125,6 +125,7 @@ pub async fn login(
         token_type: "Bearer".to_owned(),
         expires_in,
         expiry,
+        role: user.role.into(),
     }))
 }
 
