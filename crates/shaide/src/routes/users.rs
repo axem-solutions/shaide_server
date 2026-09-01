@@ -112,19 +112,19 @@ pub async fn login(
     Json(request): Json<LoginRequest>,
 ) -> Result<Json<AccessTokenResponse>, ShaideError> {
     let user = db.get_user_by_username(&request.username).await?;
-    let expiry = user.expiry;
+    let account_expires_at = user.expiry;
     get_auth_service()
         .verify_password(request.password, user.password_hash.clone())
         .await?;
     ensure_access(&user, AccessRequirement::Any)?;
     let account_expiry = (user.role == UserRole::User).then_some(user.expiry);
-    let (access_token, expires_in) =
+    let (access_token, token_expires_in) =
         get_auth_service().issue_access_token(user.id, account_expiry)?;
     Ok(Json(AccessTokenResponse {
         access_token,
         token_type: "Bearer".to_owned(),
-        expires_in,
-        expiry,
+        token_expires_in,
+        account_expires_at,
         role: user.role.into(),
     }))
 }
