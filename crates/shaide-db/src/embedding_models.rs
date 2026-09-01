@@ -9,7 +9,6 @@ pub struct EmbeddingModelDao {
     pub name: String,
     pub vector_size: i64,
     pub platform: Option<String>,
-    pub max_embedding_model_text_len: Option<i64>,
 }
 
 #[derive(Clone)]
@@ -19,7 +18,6 @@ pub struct InsertEmbeddingModelDao {
     pub vector_size: i64,
     pub platform: Option<String>,
     pub api_schema: Option<String>,
-    pub max_embedding_model_text_len: Option<i64>,
 }
 
 impl DbConn {
@@ -31,8 +29,7 @@ impl DbConn {
                 vector_size,
                 name as "name: String",
                 url as "url: String",
-                platform,
-                max_embedding_model_text_len
+                platform
             FROM embedding_models"#,
         )
         .fetch_all(&self.pool)
@@ -45,13 +42,12 @@ impl DbConn {
         embedding_model: InsertEmbeddingModelDao,
     ) -> Result<i64, ShaideDBError> {
         let res = query!(
-            "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema, max_embedding_model_text_len) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema) VALUES (?, ?, ?, ?, ?)",
             embedding_model.url,
             embedding_model.name,
             embedding_model.vector_size,
             embedding_model.platform,
-            embedding_model.api_schema,
-            embedding_model.max_embedding_model_text_len
+            embedding_model.api_schema
         )
         .execute(&self.pool)
         .await?;
@@ -82,8 +78,7 @@ impl DbConn {
                 vector_size,
                 name as "name: String",
                 url as "url: String",
-                platform,
-                max_embedding_model_text_len
+                platform
             FROM embedding_models WHERE id= ?"#,
             embedding_model_id
         )

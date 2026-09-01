@@ -158,7 +158,6 @@ pub async fn insert_embedding_model(
         vector_size,
         platform,
         api_schema,
-        max_embedding_model_text_len,
     } = body;
     let insert_embedding_model_dao = InsertEmbeddingModelDao {
         url,
@@ -166,7 +165,6 @@ pub async fn insert_embedding_model(
         vector_size,
         platform,
         api_schema,
-        max_embedding_model_text_len,
     };
     let id = db
         .insert_embedding_model(insert_embedding_model_dao)

@@ -6,8 +6,7 @@ CREATE TABLE embedding_models (
     created_at                   TIMESTAMP DEFAULT (DATETIME('now')),
     updated_at                   TIMESTAMP DEFAULT (DATETIME('now')),
     platform                     TEXT,
-    api_schema                   TEXT,
-    max_embedding_model_text_len INTEGER
+    api_schema                   TEXT
 );
 
 CREATE TABLE users (

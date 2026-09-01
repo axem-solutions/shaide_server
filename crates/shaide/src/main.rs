@@ -31,9 +31,7 @@ use tracing::debug;
 use crate::{
     config::get_environment_config,
     error_formatting::install_color_eyre,
-    middlewares::{
-        error_response::map_error_response, forward_headers_middleware, logging_middleware,
-    },
+    middlewares::{error_response::map_error_response, forward_headers_middleware},
     routes::{fallback_404, metrics::metrics},
     services::{
         auth::{AuthService, get_auth_service},
@@ -78,7 +76,6 @@ pub async fn api_router(health_state: Arc<HealthState>, db: DbConn) -> Router {
         .merge(crate::routes::vector_db::vector_db_router(db.clone()))
         .merge(crate::routes::statistics::statistics_router(db.clone()))
         .merge(crate::routes::mcp::mcp_user_routes(db.clone()).await)
-        .merge(crate::routes::logs::logs_router(db.clone()))
         .merge(crate::openapi::openapi_router())
 }
 
@@ -123,7 +120,6 @@ pub async fn start_server() {
         .fallback(fallback_404);
 
     let app = app
-        .layer(from_fn(logging_middleware))
         .layer(from_fn(forward_headers_middleware))
         .layer(from_fn(map_error_response));
     let version = env!("CARGO_PKG_VERSION");

@@ -19,9 +19,6 @@ pub struct CreateEmbeddingModelArgs {
     pub vector_size: i64,
 
     #[arg(long)]
-    pub max_embedding_model_text_len: Option<i64>,
-
-    #[arg(long)]
     pub platform: String,
 
     #[arg(long)]
@@ -34,7 +31,6 @@ impl CreateEmbeddingModelArgs {
             url: self.url,
             name: self.name,
             vector_size: self.vector_size,
-            max_embedding_model_text_len: self.max_embedding_model_text_len,
             platform: Some(self.platform),
             api_schema: self.api_schema,
         }

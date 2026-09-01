@@ -48,8 +48,8 @@ pub struct GeneratedUserResponse {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct LoginStatusResponse {
-    pub user_id: Option<i64>,
-    pub is_admin: bool,
+    user_id: Option<i64>,
+    is_admin: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
