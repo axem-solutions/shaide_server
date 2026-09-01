@@ -74,7 +74,7 @@ impl From<Option<String>> for FimModeDao {
 pub struct ReasoningEffortValuesDao(pub Vec<String>);
 
 impl ReasoningEffortValuesDao {
-    pub fn to_json(&self) -> String {
+    fn to_json(&self) -> String {
         serde_json::to_string(&self.0).expect("a list of strings always serializes")
     }
 }

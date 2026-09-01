@@ -19,7 +19,6 @@ pub struct InsertEmbeddingModelRequest {
     pub vector_size: i64,
     pub platform: Option<String>,
     pub api_schema: Option<String>,
-    pub max_embedding_model_text_len: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug, Default)]

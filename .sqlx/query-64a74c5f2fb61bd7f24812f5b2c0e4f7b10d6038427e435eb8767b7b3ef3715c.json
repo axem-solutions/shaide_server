@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT\n                id as \"id!\",\n                vector_size,\n                name as \"name: String\",\n                url as \"url: String\",\n                platform,\n                max_embedding_model_text_len\n            FROM embedding_models",
+  "query": "SELECT\n                id as \"id!\",\n                vector_size,\n                name as \"name: String\",\n                url as \"url: String\",\n                platform\n            FROM embedding_models",
   "describe": {
     "columns": [
       {
@@ -57,17 +57,6 @@
             "name": "platform"
           }
         }
-      },
-      {
-        "name": "max_embedding_model_text_len",
-        "ordinal": 5,
-        "type_info": "Integer",
-        "origin": {
-          "Table": {
-            "table": "embedding_models",
-            "name": "max_embedding_model_text_len"
-          }
-        }
       }
     ],
     "parameters": {
@@ -78,9 +67,8 @@
       false,
       false,
       false,
-      true,
       true
     ]
   },
-  "hash": "067dc6f211865301e83e45150a1a7897587b6fdab4ca267cf03d03edd3a88994"
+  "hash": "64a74c5f2fb61bd7f24812f5b2c0e4f7b10d6038427e435eb8767b7b3ef3715c"
 }

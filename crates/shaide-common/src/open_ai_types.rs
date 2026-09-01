@@ -19,7 +19,7 @@ pub struct ShaideCreateResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
     #[serde(flatten)]
-    pub additional_fields: Map<String, Value>,
+    additional_fields: Map<String, Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -32,7 +32,6 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::routes::statistics::model_daily_usage_statistics,
         crate::routes::statistics::api_usage_statistics,
         crate::routes::statistics::user_daily_usage,
-        crate::routes::logs::logs_handler,
         crate::routes::mcp::list_mcp_servers,
     ),
     tags(
@@ -48,7 +47,6 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "embeddings", description = "Embedding and indexing"),
         (name = "rag", description = "Vector search and RAG collections"),
         (name = "statistics", description = "Usage statistics"),
-        (name = "logs", description = "Server logs"),
         (name = "mcp", description = "MCP server discovery"),
     ),
     modifiers(&SecurityAddon)

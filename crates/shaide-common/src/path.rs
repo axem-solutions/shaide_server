@@ -17,10 +17,6 @@ pub fn shaide_root() -> PathBuf {
     cell.get_mut().clone()
 }
 
-pub fn logs_dir() -> PathBuf {
-    shaide_root()
-}
-
 fn shaide_db_root() -> PathBuf {
     shaide_root().join("db")
 }

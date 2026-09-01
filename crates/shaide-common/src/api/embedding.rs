@@ -2,13 +2,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Debug, Deserialize, ToSchema)]
-pub struct EmbedRequest {
-    pub model_id: i64,
-    pub text: String,
-    pub collection_name: String,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
 pub struct CodeBlock {
     pub file_path: String,
     pub start_line: i64,

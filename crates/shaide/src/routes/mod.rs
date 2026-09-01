@@ -6,7 +6,6 @@ pub mod chat;
 pub mod completions;
 pub mod embedding;
 pub mod health;
-pub mod logs;
 pub mod mcp;
 pub mod metrics;
 pub mod models;
