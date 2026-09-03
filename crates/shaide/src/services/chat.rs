@@ -168,7 +168,7 @@ impl ChoiceAccumulator {
 }
 
 #[derive(Serialize)]
-pub(crate) struct CollectedChatCompletion {
+pub struct CollectedChatCompletion {
     id: String,
     choices: Vec<ShaideChatChoice>,
     created: u32,
@@ -178,7 +178,7 @@ pub(crate) struct CollectedChatCompletion {
     #[serde(skip_serializing_if = "Option::is_none")]
     system_fingerprint: Option<String>,
     object: String,
-    pub(crate) usage: Option<CompletionUsage>,
+    pub usage: Option<CompletionUsage>,
 }
 
 #[derive(Default)]

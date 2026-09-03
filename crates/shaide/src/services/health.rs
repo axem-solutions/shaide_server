@@ -12,6 +12,12 @@ pub struct HealthState {
     version: Version,
 }
 
+impl Default for HealthState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HealthState {
     pub fn new() -> Self {
         let (cpu_info, cpu_count) = read_cpu_info();
