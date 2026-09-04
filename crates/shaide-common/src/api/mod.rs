@@ -1,7 +1,6 @@
 pub mod embedding;
 pub mod embedding_models;
 pub mod error;
-pub mod logs;
 pub mod mcp;
 pub mod models;
 pub mod rag;
