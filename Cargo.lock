@@ -4100,7 +4100,6 @@ dependencies = [
  "azure_identity",
  "base64",
  "chrono",
- "clap",
  "color-eyre",
  "dashmap",
  "dotenv-ng",
