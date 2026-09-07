@@ -4134,6 +4134,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic",
+ "tower",
  "tower-http 0.6.11",
  "tracing",
  "tracing-subscriber",
