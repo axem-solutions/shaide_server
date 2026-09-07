@@ -109,7 +109,7 @@ pub async fn start_server() {
         environment_config.control_panel_port.clone()
     );
 
-    let app = router
+    let mut app = router
         .merge(ReverseProxy::new("/control-panel", &control_panel_uri))
         .layer(CorsLayer::permissive())
         .layer(prometheus_layer)
@@ -118,6 +118,10 @@ pub async fn start_server() {
             routing::get(metrics).with_state(Arc::new(prometheus_handle)),
         )
         .fallback(fallback_404);
+
+    if let Some(webapp_url) = &environment_config.webapp_url {
+        app = app.merge(ReverseProxy::new("/app", webapp_url));
+    }
 
     let app = app
         .layer(from_fn(forward_headers_middleware))

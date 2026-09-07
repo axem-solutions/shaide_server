@@ -12,6 +12,7 @@ The following table describes the current environment variables that we use.
 | JWT_SECRET            | No        | Secret used to sign user JWTs; must be at least 32 bytes         |
 | SHAIDE_SERVER_UI_FQDN | No        | The server UI address                                            |
 | SHAIDE_SERVER_UI_PORT | No        | The server UI port                                               |
+| WEBAPP_URL            | No        | WebApp upstream URL for the `/app` reverse proxy                 |
 | GCP_API_KEY           | Yes       | GCP API key/token (if empty, auth must be provided by other means) |
 | HOST                  | Yes       | Server bind host (default: `0.0.0.0`)                            |
 | PORT                  | Yes       | Server bind port (default: `8080`)                               |
@@ -25,6 +26,7 @@ ADMIN_PASSWORD=admin_password
 JWT_SECRET=replace_with_a_random_secret_of_at_least_32_bytes
 SHAIDE_SERVER_UI_FQDN=control-panel.localhost
 SHAIDE_SERVER_UI_PORT=3000
+WEBAPP_URL=http://localhost:3001
 GCP_API_KEY=gcp_api_key
 HOST=0.0.0.0
 PORT=8080
@@ -32,6 +34,13 @@ VECTOR_DB_URL=http://localhost:6334
 
 DATABASE_URL=sqlite://crates/shaide-db/schema.sqlite
 ```
+
+`WEBAPP_URL` must be reachable from the server. These local examples assume a
+WebApp running on host port 3001. `just dev` defaults to `http://localhost:3001`,
+and Docker Compose defaults to `http://host.docker.internal:3001`; export
+`WEBAPP_URL` to override either default. Start the WebApp separately to use `/app`.
+Include any upstream base path in the URL: `/app/assets/main.js` is forwarded to
+`<WEBAPP_URL>/assets/main.js`.
 
 # Authentication
 
@@ -106,11 +115,13 @@ development the personal account is recommended.
 
 ```bash
 docker run -p 8080:8080 \
+    --add-host=host.docker.internal:host-gateway \
     -e GCP_API_KEY=$(gcloud auth application-default print-access-token) \
     -e ADMIN_PASSWORD={your-admin-password} \
     -e JWT_SECRET={your-jwt-secret-of-at-least-32-bytes} \
     -e SHAIDE_SERVER_UI_FQDN=dummy \
     -e SHAIDE_SERVER_UI_PORT=dummy \
+    -e WEBAPP_URL=http://host.docker.internal:3001 \
     -v ~/.config:/root/.config \
     shaide:{version}
 ```

@@ -14,6 +14,7 @@ services:
     image: shaide_server:latest
     extra_hosts:
       - "control-panel.localhost:host-gateway"
+      - "host.docker.internal:host-gateway"
     ports:
       - "${SHAIDE_SERVER_PORT:-8080}:${SHAIDE_SERVER_PORT:-8080}"
     environment:
@@ -22,6 +23,7 @@ services:
       PORT: ${SHAIDE_SERVER_PORT:-8080}
       SHAIDE_SERVER_UI_FQDN: control-panel.localhost
       SHAIDE_SERVER_UI_PORT: 3000
+      WEBAPP_URL: ${WEBAPP_URL:-http://host.docker.internal:3001}
       VECTOR_DB_URL: http://vectordb:6334
       RUST_BACKTRACE: full
       RUST_LIB_BACKTRACE: "1"

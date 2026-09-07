@@ -26,6 +26,7 @@ pub struct RunTimeConfig {
     pub mcp_namespace: String,
     pub mcp_label_selector: String,
     pub is_trial: bool,
+    pub webapp_url: Option<String>,
 }
 
 impl RunTimeConfig {
@@ -62,6 +63,7 @@ impl RunTimeConfig {
                 .var("TRIAL")
                 .map(|s| s.eq_ignore_ascii_case("true"))
                 .unwrap_or_default();
+            let webapp_url = env_map.var("WEBAPP_URL").ok();
             Self {
                 admin_password,
                 jwt_secret,
@@ -73,6 +75,7 @@ impl RunTimeConfig {
                 mcp_namespace,
                 mcp_label_selector,
                 is_trial,
+                webapp_url,
             }
         } else {
             let admin_password =
@@ -96,6 +99,7 @@ impl RunTimeConfig {
             let is_trial = std::env::var("TRIAL")
                 .map(|s| s.eq_ignore_ascii_case("true"))
                 .unwrap_or_default();
+            let webapp_url = std::env::var("WEBAPP_URL").ok();
             Self {
                 admin_password,
                 jwt_secret,
@@ -107,6 +111,7 @@ impl RunTimeConfig {
                 mcp_namespace,
                 mcp_label_selector,
                 is_trial,
+                webapp_url,
             }
         }
     }

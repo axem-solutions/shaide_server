@@ -29,7 +29,7 @@ services-down:
 [env("SHAIDE_SERVER_UI_FQDN", "localhost")]
 [env("SHAIDE_SERVER_UI_PORT", "3000")]
 dev: services-up
-    cargo run
+    WEBAPP_URL="${WEBAPP_URL:-http://localhost:3001}" cargo run
 
 # Regenerate SQLx offline query data
 db-prepare:
