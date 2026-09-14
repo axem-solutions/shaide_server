@@ -1,0 +1,20 @@
+{
+  "db_name": "Turso",
+  "query": "\n                INSERT INTO api_usage (route, user) \n                VALUES (?, ?) RETURNING id as \"id!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "18304171a023a11e40509c2f30fb71d2624ba3f7d089fc0f4ac03f3c80e13945"
+}

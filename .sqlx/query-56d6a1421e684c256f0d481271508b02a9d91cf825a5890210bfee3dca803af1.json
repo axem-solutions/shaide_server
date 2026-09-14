@@ -1,0 +1,52 @@
+{
+  "db_name": "Turso",
+  "query": "\n                SELECT\n                    id as \"id!: i64\",\n                    username as \"username!: String\",\n                    password_hash as \"password_hash!: String\",\n                    role as \"role!: String\",\n                    expiry as \"expiry!: DateTime<Utc>\"\n                FROM users WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "username!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "password_hash!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "role!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "expiry!: DateTime<Utc>",
+        "type_info": {
+          "name": "TIMESTAMP"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "56d6a1421e684c256f0d481271508b02a9d91cf825a5890210bfee3dca803af1"
+}

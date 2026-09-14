@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use shaide_common::api::models::{CreateModelRequest, ListModel, NativeFimMode, VisionLimits};
-use sqlx::{query, query_as};
+use sqlx_turso::{query, query_as, query_scalar};
 use tracing::warn;
 
 use crate::{
@@ -229,28 +229,28 @@ impl DbConn {
         let model = query_as!(
             ModelDAO,
             r#"SELECT
-                id as "id!",
+                id as "id!: i64",
                 created_at as "created_at!: DateTime<Utc>",
                 updated_at as "updated_at!: DateTime<Utc>",
-                name as "name: String",
-                variant as "variant: String",
-                chat_completions_endpoint as "chat_completions_endpoint: String",
-                completions_endpoint,
-                responses_endpoint,
-                api_schema as "api_schema: String",
-                daily_input_token_limit,
-                daily_output_token_limit,
-                supports_images as "supports_images: bool",
-                reasoning_effort_values as "reasoning_effort_values: String",
-                max_images_per_request,
-                max_image_bytes,
-                max_image_width_px,
-                max_image_height_px,
-                max_generated_tokens as "max_generated_tokens: i64",
-                context_size as "context_size: i64",
-                platform,
-                native_fim_mode,
-                fim_prompt_template
+                name as "name!: String",
+                variant as "variant!: String",
+                chat_completions_endpoint as "chat_completions_endpoint!: String",
+                completions_endpoint as "completions_endpoint?: String",
+                responses_endpoint as "responses_endpoint?: String",
+                api_schema as "api_schema!: String",
+                daily_input_token_limit as "daily_input_token_limit?: i64",
+                daily_output_token_limit as "daily_output_token_limit?: i64",
+                supports_images as "supports_images!: bool",
+                reasoning_effort_values as "reasoning_effort_values!: String",
+                max_images_per_request as "max_images_per_request?: i64",
+                max_image_bytes as "max_image_bytes?: i64",
+                max_image_width_px as "max_image_width_px?: i64",
+                max_image_height_px as "max_image_height_px?: i64",
+                max_generated_tokens as "max_generated_tokens!: i64",
+                context_size as "context_size!: i64",
+                platform as "platform?: String",
+                native_fim_mode as "native_fim_mode?: String",
+                fim_prompt_template as "fim_prompt_template?: String"
             FROM models WHERE name = ?"#,
             name
         )
@@ -289,8 +289,8 @@ impl DbConn {
         let reasoning_effort_values = reasoning_effort_values.to_json();
         let mut transaction = self.pool.begin().await?;
 
-        let res = query!(
-            "INSERT INTO models (
+        let res = query_scalar!(
+            r#"INSERT INTO models (
                 name,
                 variant,
                 chat_completions_endpoint,
@@ -310,7 +310,7 @@ impl DbConn {
                 platform,
                 native_fim_mode,
                 fim_prompt_template
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id as "id!: i64""#,
             name,
             variant,
             chat_completions_endpoint,
@@ -331,7 +331,7 @@ impl DbConn {
             native_fim_mode,
             fim_prompt_template
         )
-        .execute(&mut *transaction)
+        .fetch_one(&mut *transaction)
         .await
         .map_err(|err| match &err {
             sqlx::Error::Database(error) => {
@@ -345,7 +345,7 @@ impl DbConn {
         })?;
 
         transaction.commit().await?;
-        Ok(res.last_insert_rowid())
+        Ok(res)
     }
 
     pub async fn delete_model_by_id(&self, id: i64) -> Result<(), ShaideDBError> {
@@ -361,28 +361,28 @@ impl DbConn {
         let models = query_as!(
             ModelDAO,
             r#"SELECT
-                id as "id!",
+                id as "id!: i64",
                 created_at as "created_at!: DateTime<Utc>",
                 updated_at as "updated_at!: DateTime<Utc>",
-                name as "name: String",
-                variant as "variant: String",
-                chat_completions_endpoint as "chat_completions_endpoint: String",
-                completions_endpoint,
-                responses_endpoint,
-                api_schema as "api_schema: String",
-                daily_input_token_limit,
-                daily_output_token_limit,
-                supports_images as "supports_images: bool",
-                reasoning_effort_values as "reasoning_effort_values: String",
-                max_images_per_request,
-                max_image_bytes,
-                max_image_width_px,
-                max_image_height_px,
-                max_generated_tokens as "max_generated_tokens: i64",
-                context_size as "context_size: i64",
-                platform,
-                native_fim_mode,
-                fim_prompt_template
+                name as "name!: String",
+                variant as "variant!: String",
+                chat_completions_endpoint as "chat_completions_endpoint!: String",
+                completions_endpoint as "completions_endpoint?: String",
+                responses_endpoint as "responses_endpoint?: String",
+                api_schema as "api_schema!: String",
+                daily_input_token_limit as "daily_input_token_limit?: i64",
+                daily_output_token_limit as "daily_output_token_limit?: i64",
+                supports_images as "supports_images!: bool",
+                reasoning_effort_values as "reasoning_effort_values!: String",
+                max_images_per_request as "max_images_per_request?: i64",
+                max_image_bytes as "max_image_bytes?: i64",
+                max_image_width_px as "max_image_width_px?: i64",
+                max_image_height_px as "max_image_height_px?: i64",
+                max_generated_tokens as "max_generated_tokens!: i64",
+                context_size as "context_size!: i64",
+                platform as "platform?: String",
+                native_fim_mode as "native_fim_mode?: String",
+                fim_prompt_template as "fim_prompt_template?: String"
             FROM models"#
         )
         .fetch_all(&self.pool)

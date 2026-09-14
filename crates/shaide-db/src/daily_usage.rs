@@ -1,4 +1,4 @@
-use sqlx::{Sqlite, Transaction, query, query_as};
+use sqlx_turso::{TursoTransaction, query, query_as};
 
 use crate::{DbConn, error::ShaideDBError};
 
@@ -54,7 +54,7 @@ impl DbConn {
 
     async fn ensure_daily_usage(
         &self,
-        transaction: &mut Transaction<'_, Sqlite>,
+        transaction: &mut TursoTransaction<'_>,
         insert_daily_usage: &UpsertDailyUsageDao,
     ) -> Result<i64, ShaideDBError> {
         let daily_usage = self
@@ -74,9 +74,9 @@ impl DbConn {
             let query_result = query_as!(
                 DailyUsageId,
                 r#"
-                    INSERT INTO daily_usage_token (date, user, model) 
+                    INSERT INTO daily_usage_token (date, user, model)
                     VALUES (?, ?, ?)
-                    RETURNING id as "id!";
+                    RETURNING id as "id!: i64";
                 "#,
                 insert_daily_usage.date,
                 insert_daily_usage.user,
@@ -104,7 +104,7 @@ impl DbConn {
 
     async fn get_daily_usage_by_trx(
         &self,
-        transaction: &mut Transaction<'_, Sqlite>,
+        transaction: &mut TursoTransaction<'_>,
         date: &str,
         user: i64,
         model: i64,
@@ -112,10 +112,10 @@ impl DbConn {
         let daily_usage_dao = query_as!(
             DailyUsageDao,
             r#"
-                SELECT 
-                    id as "id!",
-                    total_input_token_count,
-                    total_output_token_count
+                SELECT
+                    id as "id!: i64",
+                    total_input_token_count as "total_input_token_count!: i64",
+                    total_output_token_count as "total_output_token_count!: i64"
                 FROM daily_usage_token WHERE
                     user = ? AND
                     model = ? AND
@@ -146,13 +146,13 @@ impl DbConn {
             DailyUsageDaoWithModelName,
             r#"
                 SELECT
-                    daily_usage_token.date, 
-                    daily_usage_token.user,
-                    daily_usage_token.model,
-                    daily_usage_token.total_input_token_count,
-                    daily_usage_token.total_output_token_count,
+                    daily_usage_token.date as "date!: String",
+                    daily_usage_token.user as "user!: i64",
+                    daily_usage_token.model as "model!: i64",
+                    daily_usage_token.total_input_token_count as "total_input_token_count!: i64",
+                    daily_usage_token.total_output_token_count as "total_output_token_count!: i64",
                     models.name as "model_name!: String"
-                FROM daily_usage_token 
+                FROM daily_usage_token
                 LEFT JOIN models on daily_usage_token.model = models.id
                 WHERE date(daily_usage_token.date) >= date(?) AND date(daily_usage_token.date) <= date(?)
                 LIMIT ? OFFSET ?
@@ -176,13 +176,13 @@ impl DbConn {
             DailyUsageDaoWithModelName,
             r#"
                 SELECT
-                    daily_usage_token.date, 
-                    daily_usage_token.user,
-                    daily_usage_token.model,
-                    daily_usage_token.total_input_token_count,
-                    daily_usage_token.total_output_token_count,
+                    daily_usage_token.date as "date!: String",
+                    daily_usage_token.user as "user!: i64",
+                    daily_usage_token.model as "model!: i64",
+                    daily_usage_token.total_input_token_count as "total_input_token_count!: i64",
+                    daily_usage_token.total_output_token_count as "total_output_token_count!: i64",
                     models.name as "model_name!: String"
-                FROM daily_usage_token 
+                FROM daily_usage_token
                 LEFT JOIN models on daily_usage_token.model = models.id
                 WHERE daily_usage_token.date = ? and daily_usage_token.user = ?
             "#,

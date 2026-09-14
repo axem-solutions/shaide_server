@@ -1,3 +1,6 @@
+// Turso pool futures require deeper Send trait evaluation.
+#![recursion_limit = "256"]
+
 mod config;
 mod error;
 mod error_formatting;

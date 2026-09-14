@@ -1,4 +1,4 @@
-use sqlx::{query, query_as};
+use sqlx_turso::{query, query_as, query_scalar};
 
 use crate::{DbConn, error::ShaideDBError};
 
@@ -25,11 +25,11 @@ impl DbConn {
         let models = query_as!(
             EmbeddingModelDao,
             r#"SELECT
-                id as "id!",
-                vector_size,
-                name as "name: String",
-                url as "url: String",
-                platform
+                id as "id!: i64",
+                vector_size as "vector_size!: i64",
+                name as "name!: String",
+                url as "url!: String",
+                platform as "platform?: String"
             FROM embedding_models"#,
         )
         .fetch_all(&self.pool)
@@ -41,17 +41,17 @@ impl DbConn {
         &self,
         embedding_model: InsertEmbeddingModelDao,
     ) -> Result<i64, ShaideDBError> {
-        let res = query!(
-            "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema) VALUES (?, ?, ?, ?, ?)",
+        let res = query_scalar!(
+            r#"INSERT INTO embedding_models (url, name, vector_size, platform, api_schema) VALUES (?, ?, ?, ?, ?) RETURNING id as "id!: i64""#,
             embedding_model.url,
             embedding_model.name,
             embedding_model.vector_size,
             embedding_model.platform,
             embedding_model.api_schema
         )
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
-        Ok(res.last_insert_rowid())
+        Ok(res)
     }
 
     pub async fn delete_embedding_model(
@@ -74,11 +74,11 @@ impl DbConn {
         let model = query_as!(
             EmbeddingModelDao,
             r#"SELECT
-                id as "id!",
-                vector_size,
-                name as "name: String",
-                url as "url: String",
-                platform
+                id as "id!: i64",
+                vector_size as "vector_size!: i64",
+                name as "name!: String",
+                url as "url!: String",
+                platform as "platform?: String"
             FROM embedding_models WHERE id= ?"#,
             embedding_model_id
         )

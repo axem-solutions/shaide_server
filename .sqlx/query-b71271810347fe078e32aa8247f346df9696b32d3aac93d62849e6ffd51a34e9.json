@@ -1,0 +1,20 @@
+{
+  "db_name": "Turso",
+  "query": "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema) VALUES (?, ?, ?, ?, ?) RETURNING id as \"id!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b71271810347fe078e32aa8247f346df9696b32d3aac93d62849e6ffd51a34e9"
+}

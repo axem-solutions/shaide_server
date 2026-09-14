@@ -1,0 +1,20 @@
+{
+  "db_name": "Turso",
+  "query": "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin') RETURNING id as \"id!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "517f66c3b7e086a7cacb7da112cb5bb56bc3d3092dd747d0970be0abdf730c20"
+}

@@ -2,6 +2,7 @@
 set shell := ["bash", "-cu"]
 
 migrations_dir := "crates/shaide-db/migrations"
+server_db := env_var_or_default("shaide_ROOT", env_var("HOME") / ".config/axem/shaide") / "db/shaide-server.turso"
 docker_local_tag := "shaide-server:local"
 
 default:
@@ -29,23 +30,24 @@ services-down:
 [env("SHAIDE_SERVER_UI_FQDN", "localhost")]
 [env("SHAIDE_SERVER_UI_PORT", "3000")]
 dev: services-up
-    cargo run
+    SQLX_OFFLINE=true cargo run -p shaide
 
 # Regenerate SQLx offline query data
-db-prepare:
-    cargo sqlx prepare --workspace
+db-prepare database=server_db: (db-migrate database)
+    cargo clean -p shaide-db
+    SQLX_OFFLINE=false sqlx-turso prepare --database-url "turso://{{ absolute_path(database) }}" -- -p shaide-db --lib
 
 # Apply all pending migrations
-db-migrate:
-    cargo sqlx migrate run --source {{ migrations_dir }}
+db-migrate database=server_db:
+    SQLX_OFFLINE=true cargo run -p shaide-db-migrate -- run "{{ database }}"
 
 # Revert the latest migration
-db-revert:
-    cargo sqlx migrate revert --source {{ migrations_dir }}
+db-revert database=server_db:
+    SQLX_OFFLINE=true cargo run -p shaide-db-migrate -- revert "{{ database }}"
 
-# Open a SQLite database, defaulting to the server's local database
-db-shell database="$HOME/.config/axem/shaide/db/shaide-server.sqlite":
-    sqlite3 "{{ database }}"
+# Open a Turso database, defaulting to the server's local database
+db-shell database=server_db:
+    tursodb "{{ database }}"
 
 # Create a new migration
 db-new name:

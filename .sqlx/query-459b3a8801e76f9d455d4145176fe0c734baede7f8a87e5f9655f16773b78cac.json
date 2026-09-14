@@ -1,0 +1,20 @@
+{
+  "db_name": "Turso",
+  "query": "INSERT INTO models (\n                name,\n                variant,\n                chat_completions_endpoint,\n                completions_endpoint,\n                responses_endpoint,\n                api_schema,\n                daily_input_token_limit,\n                daily_output_token_limit,\n                supports_images,\n                reasoning_effort_values,\n                max_images_per_request,\n                max_image_bytes,\n                max_image_width_px,\n                max_image_height_px,\n                max_generated_tokens,\n                context_size,\n                platform,\n                native_fim_mode,\n                fim_prompt_template\n            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id as \"id!: i64\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "459b3a8801e76f9d455d4145176fe0c734baede7f8a87e5f9655f16773b78cac"
+}

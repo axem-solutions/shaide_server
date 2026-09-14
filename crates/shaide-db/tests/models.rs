@@ -1,10 +1,14 @@
+// Turso pool futures require deeper Send trait evaluation.
+#![recursion_limit = "256"]
+
 use std::path::Path;
 
 use shaide_db::{
     DbConn, InsertModelDAO,
     models::{NativeFimModeDao, ReasoningEffortValuesDao},
 };
-use sqlx::{Connection, SqliteConnection, migrate::Migrate};
+use sqlx::{Connection, migrate::Migrate};
+use sqlx_turso::TursoConnection;
 use temp_testdir::TempDir;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
@@ -95,7 +99,7 @@ async fn baseline_migration_is_reversible() {
     let db = test_db(&db_file).await;
     db.pool.close().await;
 
-    let mut conn = SqliteConnection::connect(&format!("sqlite://{}", db_file.display()))
+    let mut conn = TursoConnection::connect(&format!("turso://{}", db_file.display()))
         .await
         .expect("test database should be reachable");
     let down_migration = MIGRATOR
@@ -116,4 +120,95 @@ async fn baseline_migration_is_reversible() {
     .await
     .expect("remaining tables should be countable");
     assert_eq!(remaining_tables, 0);
+}
+
+#[tokio::test]
+async fn model_constraints_and_values_survive_reopening() {
+    let temp_dir = TempDir::default();
+    let db_file = temp_dir.join("models.turso");
+    let db = test_db(&db_file).await;
+    let mut model = insert_model("persistent-model", &["high"]);
+    model.supports_images = true;
+    model.daily_input_token_limit = Some(i64::from(i32::MAX) + 1);
+    let id = db.create_model(model).await.unwrap();
+    assert!(matches!(
+        db.create_model(insert_model("persistent-model", &[])).await,
+        Err(shaide_db::error::ShaideDBError::InsertFailedOnConflict(_))
+    ));
+    db.pool.close().await;
+
+    let db = test_db(&db_file).await;
+    let model = db.get_model_by_name("persistent-model").await.unwrap();
+    assert_eq!(model.id, id);
+    assert!(model.supports_images);
+    assert_eq!(model.daily_input_token_limit, Some(i64::from(i32::MAX) + 1));
+    assert!(model.platform.is_none());
+    assert_eq!(model.reasoning_effort_values.0, ["high"]);
+}
+
+#[tokio::test]
+async fn usage_transactions_roll_back_and_foreign_keys_cascade() {
+    use shaide_db::daily_usage::UpsertDailyUsageDao;
+
+    let temp_dir = TempDir::default();
+    let db = test_db(&temp_dir.join("usage.turso")).await;
+    let user = db
+        .create_user("usage-user".into(), "hash".into(), chrono::Utc::now())
+        .await
+        .unwrap();
+    let model = db
+        .create_model(insert_model("usage-model", &[]))
+        .await
+        .unwrap();
+    for _ in 0..2 {
+        db.upsert_daily_usage_token_count(UpsertDailyUsageDao {
+            user,
+            model,
+            date: "2026-09-09".into(),
+            input_token_count: i64::from(i32::MAX),
+            output_token_count: 7,
+        })
+        .await
+        .unwrap();
+    }
+    let usage = db
+        .get_daily_usage("2026-09-09", user, model)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(usage.total_input_token_count, 2 * i64::from(i32::MAX));
+    assert_eq!(usage.total_output_token_count, 14);
+
+    let mut transaction = db.pool.begin().await.unwrap();
+    sqlx::query("DELETE FROM models WHERE id = ?")
+        .bind(model)
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+    transaction.rollback().await.unwrap();
+    assert!(
+        db.get_daily_usage("2026-09-09", user, model)
+            .await
+            .unwrap()
+            .is_some()
+    );
+
+    db.delete_model_by_id(model).await.unwrap();
+    assert!(
+        db.get_daily_usage("2026-09-09", user, model)
+            .await
+            .unwrap()
+            .is_none()
+    );
+    assert!(
+        db.upsert_daily_usage_token_count(UpsertDailyUsageDao {
+            user,
+            model,
+            date: "2026-09-09".into(),
+            input_token_count: 1,
+            output_token_count: 1,
+        })
+        .await
+        .is_err()
+    );
 }

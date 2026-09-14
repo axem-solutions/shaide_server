@@ -1,0 +1,52 @@
+{
+  "db_name": "Turso",
+  "query": "SELECT\n                id as \"id!: i64\",\n                vector_size as \"vector_size!: i64\",\n                name as \"name!: String\",\n                url as \"url!: String\",\n                platform as \"platform?: String\"\n            FROM embedding_models",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "vector_size!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "url!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "platform?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "d0f8e0010cefa5edb70d77c49e45457da829abcf31200bfa6ff36ef5075cdbcc"
+}

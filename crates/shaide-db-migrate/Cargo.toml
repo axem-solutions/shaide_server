@@ -1,0 +1,11 @@
+[package]
+name = "shaide-db-migrate"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+sqlx = { workspace = true, features = ["macros", "migrate"] }
+sqlx-turso = { workspace = true, features = ["migrate"] }
+tokio = { workspace = true, features = ["fs", "macros"] }

@@ -1,0 +1,20 @@
+{
+  "db_name": "Turso",
+  "query": "\n                    INSERT INTO daily_usage_token (date, user, model)\n                    VALUES (?, ?, ?)\n                    RETURNING id as \"id!: i64\";\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d5e0213a0e9ae471a50c04a522e1f922b574d689c71863f5049d239eab2d7930"
+}

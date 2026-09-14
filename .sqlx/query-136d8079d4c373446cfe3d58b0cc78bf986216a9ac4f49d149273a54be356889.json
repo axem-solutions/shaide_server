@@ -1,11 +1,9 @@
 {
-  "db_name": "SQLite",
+  "db_name": "Turso",
   "query": "UPDATE models SET daily_input_token_limit = ? WHERE name = ?",
   "describe": {
     "columns": [],
-    "parameters": {
-      "Right": 2
-    },
+    "parameters": null,
     "nullable": []
   },
   "hash": "136d8079d4c373446cfe3d58b0cc78bf986216a9ac4f49d149273a54be356889"

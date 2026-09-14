@@ -1,0 +1,188 @@
+{
+  "db_name": "Turso",
+  "query": "SELECT\n                id as \"id!: i64\",\n                created_at as \"created_at!: DateTime<Utc>\",\n                updated_at as \"updated_at!: DateTime<Utc>\",\n                name as \"name!: String\",\n                variant as \"variant!: String\",\n                chat_completions_endpoint as \"chat_completions_endpoint!: String\",\n                completions_endpoint as \"completions_endpoint?: String\",\n                responses_endpoint as \"responses_endpoint?: String\",\n                api_schema as \"api_schema!: String\",\n                daily_input_token_limit as \"daily_input_token_limit?: i64\",\n                daily_output_token_limit as \"daily_output_token_limit?: i64\",\n                supports_images as \"supports_images!: bool\",\n                reasoning_effort_values as \"reasoning_effort_values!: String\",\n                max_images_per_request as \"max_images_per_request?: i64\",\n                max_image_bytes as \"max_image_bytes?: i64\",\n                max_image_width_px as \"max_image_width_px?: i64\",\n                max_image_height_px as \"max_image_height_px?: i64\",\n                max_generated_tokens as \"max_generated_tokens!: i64\",\n                context_size as \"context_size!: i64\",\n                platform as \"platform?: String\",\n                native_fim_mode as \"native_fim_mode?: String\",\n                fim_prompt_template as \"fim_prompt_template?: String\"\n            FROM models WHERE name = ?",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at!: DateTime<Utc>",
+        "type_info": {
+          "name": "TIMESTAMP"
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at!: DateTime<Utc>",
+        "type_info": {
+          "name": "TIMESTAMP"
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "variant!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "chat_completions_endpoint!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "completions_endpoint?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "responses_endpoint?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "api_schema!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "daily_input_token_limit?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "daily_output_token_limit?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "supports_images!: bool",
+        "type_info": {
+          "name": "BOOLEAN"
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "reasoning_effort_values!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "max_images_per_request?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "max_image_bytes?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "max_image_width_px?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "max_image_height_px?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "max_generated_tokens!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "context_size!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "platform?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "native_fim_mode?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "fim_prompt_template?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "83c99b013591c45768fcdc8d9916c34bd554dc0c4d8a3964002622435ae0ac36"
+}

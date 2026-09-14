@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use sqlx::{query, query_as};
+use sqlx_turso::{query, query_as, query_scalar};
 
 use crate::{DbConn, error::ShaideDBError};
 
@@ -35,18 +35,17 @@ impl DbConn {
     ) -> Result<i64, ShaideDBError> {
         let InsertApiUsageDao { route, user } = insert_api_usage;
         let mut transaction = self.pool.begin().await?;
-        let res = query!(
+        let res = query_scalar!(
             r#"
                 INSERT INTO api_usage (route, user) 
-                VALUES (?, ?);
-            "#,
+                VALUES (?, ?) RETURNING id as "id!: i64""#,
             route,
             user,
         )
-        .execute(&mut *transaction)
+        .fetch_one(&mut *transaction)
         .await?;
         transaction.commit().await?;
-        Ok(res.last_insert_rowid())
+        Ok(res)
     }
 
     pub async fn update_model_usage(
@@ -86,12 +85,12 @@ impl DbConn {
             ApiUsageDaoWithModelName,
             r#"
                 SELECT
-                    api_usage.route,
-                    api_usage.user,
+                    api_usage.route as "route!: String",
+                    api_usage.user as "user!: i64",
                     api_usage.request_made as "request_made!: DateTime<Utc>",
-                    api_usage.input_token_count,
-                    api_usage.output_token_count,
-                    models.name as "model_name!: String"
+                    api_usage.input_token_count as "input_token_count?: i64",
+                    api_usage.output_token_count as "output_token_count?: i64",
+                    models.name as "model_name?: String"
                 FROM api_usage 
                 LEFT JOIN models on api_usage.model = models.id
                 WHERE api_usage.request_made >= date(?) AND api_usage.request_made <= date(?)

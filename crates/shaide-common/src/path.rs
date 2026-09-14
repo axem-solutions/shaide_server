@@ -22,5 +22,5 @@ fn shaide_db_root() -> PathBuf {
 }
 
 pub fn get_db_file() -> PathBuf {
-    shaide_db_root().join("shaide-server.sqlite")
+    shaide_db_root().join("shaide-server.turso")
 }

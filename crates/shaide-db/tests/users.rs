@@ -1,3 +1,6 @@
+// Turso pool futures require deeper Send trait evaluation.
+#![recursion_limit = "256"]
+
 use chrono::Utc;
 use shaide_db::DbConn;
 use temp_testdir::TempDir;
@@ -30,4 +33,19 @@ async fn created_user_keeps_the_supplied_password_hash() {
     assert_eq!(user.username, "test-user");
     assert_eq!(user.password_hash, "test-password-hash");
     assert_eq!(user_by_id.username, user.username);
+
+    let request = db
+        .insert_api_usage(shaide_db::api_usage::InsertApiUsageDao {
+            route: "/test".into(),
+            user: user_id,
+        })
+        .await
+        .unwrap();
+    assert!(request > 0);
+    let usage = db
+        .get_user_api_statistics("2000-01-01", "2100-01-01", None, None)
+        .await
+        .unwrap();
+    assert_eq!(usage.api_usages.len(), 1);
+    assert!(usage.api_usages[0].model_name.is_none());
 }

@@ -16,7 +16,7 @@ The following table describes the current environment variables that we use.
 | HOST                  | Yes       | Server bind host (default: `0.0.0.0`)                            |
 | PORT                  | Yes       | Server bind port (default: `8080`)                               |
 | VECTOR_DB_URL         | Yes       | Vector DB URL (default: `http://localhost:6334`)                 |
-| DATABASE_URL          | Yes       | Database URL used by SQLx tooling/migrations                     |
+| DATABASE_URL          | Yes       | Local Turso URL used for online query checking                     |
 
 Example `.env` file.
 
@@ -30,7 +30,8 @@ HOST=0.0.0.0
 PORT=8080
 VECTOR_DB_URL=http://localhost:6334
 
-DATABASE_URL=sqlite://crates/shaide-db/schema.sqlite
+DATABASE_URL=turso://${HOME}/.config/axem/shaide/db/shaide-server.turso
+SQLX_OFFLINE=true
 ```
 
 # Authentication
@@ -46,31 +47,44 @@ curl -X POST http://localhost:8080/v1/login \
 Send the returned `access_token` to authenticated endpoints as
 `Authorization: Bearer <access_token>`.
 
-# Migrations
+# Database and migrations
 
-To create a new migration, you may do the following:
+The server uses the embedded Rust [Turso database](https://github.com/tursodatabase/turso)
+through `sqlx-turso`, with no remote service or credentials. This experiment uses
+`~/.config/axem/shaide/db/shaide-server.turso` (or under `shaide_ROOT` when set).
+It starts a fresh database; the previous `shaide-server.sqlite` is not imported.
+The initial schema has a constraint-order adjustment required by Turso, so do not
+rename an old SQLite file to the new path.
 
-```
-sqlx migrate add --source crates/shaide-db/migrations -r -s migration_name
+Startup applies migrations automatically. For development:
+
+```sh
+cargo install sqlx-turso-cli --version 0.1.0-alpha.1 --locked
+cargo install sqlx-cli --version 0.9.0 --locked
+just db-new migration_name
+just db-migrate
+just db-prepare
 ```
 
-To run the migrations:
+`db-migrate`, `db-revert`, and `db-prepare` default to the local server database.
+Stop the server before using them. Pass a file path to target another database.
+No separate schema database is needed; offline builds use the `.sqlx` cache. `just db-shell` uses the local `tursodb`
+CLI, which is separate from the Turso Cloud CLI.
 
-```
-cargo sqlx migrate run --source crates/shaide-db/migrations
+Committed `.sqlx` metadata supports builds without a schema database:
+
+```sh
+SQLX_OFFLINE=true cargo build
 ```
 
-And to revert a migration, you can:
-
-```
-cargo sqlx migrate revert --source crates/shaide-db/migrations
-```
+See [database development](crates/shaide-db/docs/sqlx.md) for details and the
+adapter's experimental limitations.
 
 # To run it locally, natively
 
 ```sh
-cargo run # run the server
-cargo run --bin shaide-cli -- list-users # list users with the cli. see the cli docs for more info
+SQLX_OFFLINE=true cargo run -p shaide # run the server
+SQLX_OFFLINE=true cargo run --bin shaide-cli -- list-users # list users with the cli. see the cli docs for more info
 ```
 
 # To build the container image
@@ -162,11 +176,11 @@ To run commonly used commands, you can use
 ```
 Available recipes:
     check                  # Run formatting, Clippy, and tests
-    db-migrate             # Apply all pending migrations
+    db-migrate [database]  # Apply all pending migrations
     db-new name            # Create a new migration
     db-prepare             # Regenerate SQLx offline query data
-    db-revert              # Revert the latest migration
-    db-shell [database]    # Open a SQLite database
+    db-revert [database]   # Revert the latest migration
+    db-shell [database]    # Open a Turso database
     default                # Default recipe
     dev                    # Start local dependencies and run the server
     docker-build [tag]     # Build a local server image

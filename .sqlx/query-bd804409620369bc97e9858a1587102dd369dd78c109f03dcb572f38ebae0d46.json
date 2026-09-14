@@ -1,0 +1,60 @@
+{
+  "db_name": "Turso",
+  "query": "\n                SELECT\n                    api_usage.route as \"route!: String\",\n                    api_usage.user as \"user!: i64\",\n                    api_usage.request_made as \"request_made!: DateTime<Utc>\",\n                    api_usage.input_token_count as \"input_token_count?: i64\",\n                    api_usage.output_token_count as \"output_token_count?: i64\",\n                    models.name as \"model_name?: String\"\n                FROM api_usage \n                LEFT JOIN models on api_usage.model = models.id\n                WHERE api_usage.request_made >= date(?) AND api_usage.request_made <= date(?)\n                LIMIT ? OFFSET ?\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "route!: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "request_made!: DateTime<Utc>",
+        "type_info": {
+          "name": "TIMESTAMP"
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "input_token_count?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "output_token_count?: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "model_name?: String",
+        "type_info": {
+          "name": "TEXT"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "bd804409620369bc97e9858a1587102dd369dd78c109f03dcb572f38ebae0d46"
+}

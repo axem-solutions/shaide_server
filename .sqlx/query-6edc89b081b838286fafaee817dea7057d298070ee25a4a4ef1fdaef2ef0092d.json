@@ -1,0 +1,36 @@
+{
+  "db_name": "Turso",
+  "query": "\n                SELECT\n                    id as \"id!: i64\",\n                    total_input_token_count as \"total_input_token_count!: i64\",\n                    total_output_token_count as \"total_output_token_count!: i64\"\n                FROM daily_usage_token WHERE\n                    user = ? AND\n                    model = ? AND\n                    date = ?;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "total_input_token_count!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "total_output_token_count!: i64",
+        "type_info": {
+          "name": "INTEGER"
+        }
+      }
+    ],
+    "parameters": null,
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "6edc89b081b838286fafaee817dea7057d298070ee25a4a4ef1fdaef2ef0092d"
+}

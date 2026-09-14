@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-use sqlx::{FromRow, query, query_as};
+use sqlx::FromRow;
+use sqlx_turso::{query_as, query_scalar};
 
 use super::DbConn;
 use crate::error::{Resource, ShaideDBError};
@@ -47,16 +48,16 @@ impl DbConn {
         expiry: DateTime<Utc>,
     ) -> Result<i64, ShaideDBError> {
         let mut transaction = self.pool.begin().await?;
-        let res = query!(
-            "INSERT INTO users (username, password_hash, expiry) VALUES (?, ?, ?)",
+        let res = query_scalar!(
+            r#"INSERT INTO users (username, password_hash, expiry) VALUES (?, ?, ?) RETURNING id as "id!: i64""#,
             username,
             password_hash,
             expiry
         )
-        .execute(&mut *transaction)
+        .fetch_one(&mut *transaction)
         .await?;
         transaction.commit().await?;
-        Ok(res.last_insert_rowid())
+        Ok(res)
     }
 
     pub async fn create_admin(
@@ -64,14 +65,14 @@ impl DbConn {
         username: String,
         password_hash: String,
     ) -> Result<i64, ShaideDBError> {
-        let res = query!(
-            "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')",
+        let res = query_scalar!(
+            r#"INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin') RETURNING id as "id!: i64""#,
             username,
             password_hash
         )
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
-        Ok(res.last_insert_rowid())
+        Ok(res)
     }
 
     pub async fn get_user_by_username(
@@ -82,11 +83,11 @@ impl DbConn {
         let user = query_as!(
             UserDAO,
             r#"
-            SELECT 
-                id as "id!", 
-                username,
-                password_hash,
-                role,
+            SELECT
+                id as "id!: i64",
+                username as "username!: String",
+                password_hash as "password_hash!: String",
+                role as "role!: String",
                 expiry as "expiry!: DateTime<Utc>"
             FROM users WHERE username = ?"#,
             &username
@@ -105,10 +106,10 @@ impl DbConn {
             UserDAO,
             r#"
                 SELECT
-                    id as "id!",
-                    username,
-                    password_hash,
-                    role,
+                    id as "id!: i64",
+                    username as "username!: String",
+                    password_hash as "password_hash!: String",
+                    role as "role!: String",
                     expiry as "expiry!: DateTime<Utc>"
                 FROM users WHERE id = ?"#,
             user_id
@@ -123,10 +124,10 @@ impl DbConn {
             UserDAO,
             r#"
                 SELECT
-                    id as "id!",
-                    username,
-                    password_hash,
-                    role,
+                    id as "id!: i64",
+                    username as "username!: String",
+                    password_hash as "password_hash!: String",
+                    role as "role!: String",
                     expiry as "expiry!: DateTime<Utc>"
                 FROM users"#
         )
