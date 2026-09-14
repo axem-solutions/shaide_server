@@ -217,12 +217,13 @@ pub async fn chat_completions(
     // Providers use one streaming path internally. The route decides whether that stream is
     // forwarded as SSE or collected into a regular chat completion response.
     request.stream = Some(true);
-    if !should_stream {
-        request.stream_options = Some(ChatCompletionStreamOptions {
-            include_usage: Some(true),
+    request
+        .stream_options
+        .get_or_insert(ChatCompletionStreamOptions {
+            include_usage: None,
             include_obfuscation: None,
-        });
-    }
+        })
+        .include_usage = Some(true);
 
     let requested_model = request.model.clone();
     let mut provider_stream = completion_stream(request, &model_dao).await?;
