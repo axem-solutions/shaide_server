@@ -55,12 +55,15 @@ async fn a_streamed_chat_completion_streams_content_in_order_and_records_usage()
     );
 
     let usage_event = chunks
-        .iter()
-        .find(|event| !event.json()["usage"].is_null())
-        .expect("a final usage chunk should be present in the stream");
-    let usage = &usage_event.json()["usage"];
+        .last()
+        .expect("a final usage chunk should precede [DONE]");
+    let usage_event = usage_event.json();
+    assert_eq!(usage_event["choices"], serde_json::json!([]));
+    let usage = &usage_event["usage"];
+    assert!(!usage.is_null(), "the final chunk should contain usage");
     assert_eq!(usage["prompt_tokens"], 11);
     assert_eq!(usage["completion_tokens"], 7);
+    assert_eq!(usage["total_tokens"], 18);
 
     // The usage row daily-limit enforcement reads (`DbConn::get_daily_usage`) must reflect this
     // request, not just the SSE the client saw.
@@ -81,4 +84,9 @@ async fn a_streamed_chat_completion_streams_content_in_order_and_records_usage()
     let upstream_request = server.upstream().only_request_to("/v1/chat/completions");
     assert_eq!(upstream_request.json()["model"], DEFAULT_MODEL);
     assert_eq!(upstream_request.json()["stream"], true);
+    assert_eq!(
+        upstream_request.json()["stream_options"]["include_usage"],
+        true,
+        "the server should request usage for accounting even when the client omits the option"
+    );
 }
