@@ -1,0 +1,19 @@
+# Rust build artifacts: 6+ GB locally and never needed inside the image.
+target/
+
+# Version control and CI configuration.
+.git/
+.gitignore
+.github/
+
+# Editor and agent tooling.
+.vscode/
+.claude/
+
+# Docker's own files.
+Dockerfile
+.dockerignore
+compose.yaml
+
+# NOTE: do not ignore .sqlx/ - the image build sets SQLX_OFFLINE=true and
+# needs the cached query metadata to compile.
