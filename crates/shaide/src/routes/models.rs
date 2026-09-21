@@ -1,4 +1,11 @@
-use axum::{Json, Router, extract::State, routing};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    response::{IntoResponse, Response},
+    routing,
+};
+use serde::Deserialize;
+use serde_json::json;
 use shaide_common::api::{
     embedding_models::{
         DeleteEmbeddingModelRequest, DeleteEmbeddingModelResponse, InsertEmbeddingModelRequest,
@@ -18,17 +25,30 @@ use crate::{
     middlewares::{Admin, Authenticated},
 };
 
+#[derive(Debug, Deserialize)]
+pub struct ListModelsQuery {
+    /// Sent only by the Codex CLI, which expects its own model catalog shape.
+    client_version: Option<String>,
+}
+
 #[utoipa::path(
     get,
     path = "/v1/models",
     tag = "models",
+    params(("client_version" = Option<String>, Query, description = "Set by the Codex CLI; returns an empty Codex model catalog")),
     responses((status = 200, description = "Available models", body = ListModelsResponse)),
     security(("bearer_token" = []))
 )]
 pub async fn list_models(
     _authenticated: Authenticated,
     State(db): State<DbConn>,
-) -> Result<Json<ListModelsResponse>, ShaideError> {
+    Query(query): Query<ListModelsQuery>,
+) -> Result<Response, ShaideError> {
+    if query.client_version.is_some() {
+        // Codex parses `models` as its own `ModelInfo` catalog. An empty catalog keeps Codex on
+        // its bundled model metadata instead of failing to decode shaide's model list.
+        return Ok(Json(json!({ "models": [] })).into_response());
+    }
     let models = db.list_models().await?;
     let (models, data) = models
         .into_iter()
@@ -49,7 +69,8 @@ pub async fn list_models(
         models,
         object: "list".to_owned(),
         data,
-    }))
+    })
+    .into_response())
 }
 
 #[utoipa::path(

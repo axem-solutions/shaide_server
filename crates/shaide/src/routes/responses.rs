@@ -1,4 +1,3 @@
-use async_openai::traits::EventType;
 use axum::{
     Json, Router,
     extract::{DefaultBodyLimit, State},
@@ -16,8 +15,10 @@ use tracing::{debug, error};
 use crate::{
     error::ShaideError,
     middlewares::AuthUser,
-    providers::gcp::check_user_model_usage,
-    services::responses::{ProviderResponse, create_response as create_provider_response},
+    providers::gcp::{check_user_model_usage, try_update_model_usage},
+    services::responses::{
+        ProviderResponse, create_response as create_provider_response, response_usage,
+    },
 };
 
 const MAX_RESPONSES_BODY_BYTES: usize = 28 * 1024 * 1024;
@@ -53,22 +54,48 @@ pub async fn create_response(
             model.name
         )));
     }
-    check_user_model_usage(db, auth.user.id, &model).await?;
+    check_user_model_usage(db.clone(), auth.user.id, &model).await?;
 
     match create_provider_response(request, &model).await? {
-        ProviderResponse::Json(response) => Ok(Json(response).into_response()),
+        ProviderResponse::Json(response) => {
+            if let Err(err) = try_update_model_usage(
+                db,
+                auth.user.id,
+                auth.request_id,
+                model.id,
+                response_usage(&response).as_ref(),
+            )
+            .await
+            {
+                error!(error = %err, "Could not update model usage statistics");
+            }
+            Ok(Json(response).into_response())
+        }
         ProviderResponse::Stream(mut stream) => {
             let events = async_stream::stream! {
                 while let Some(event) = stream.next().await {
                     match event {
                         Ok(event) => {
-                            let event_type = event.event_type();
-                            yield Event::default().event(event_type).json_data(event)
+                            if let Some(usage) = event.usage()
+                                && let Err(err) = try_update_model_usage(
+                                    db.clone(),
+                                    auth.user.id,
+                                    auth.request_id,
+                                    model.id,
+                                    Some(&usage),
+                                )
+                                .await
+                            {
+                                error!(error = %err, "Could not update model usage statistics");
+                            }
+                            yield Event::default()
+                                .event(event.event_type)
+                                .json_data(event.data)
                                 .map_err(anyhow::Error::from);
                         }
                         Err(error) => {
                             error!(error = %error, "Responses API stream failed");
-                            yield Err(anyhow::Error::from(error));
+                            yield Err(anyhow::anyhow!(error));
                             break;
                         }
                     }
