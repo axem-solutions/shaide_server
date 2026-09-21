@@ -32,10 +32,21 @@ jobs:
 
       - name: Create and push tag
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.version.outputs.version }}" -m "${{ steps.version.outputs.version }}"
-          git push origin "${{ steps.version.outputs.version }}"
+          # Idempotent: a failure in a later step leaves the tag behind, and a
+          # re-run must be able to get past this step to retry what failed.
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "Tag $VERSION already exists locally, skipping creation."
+          else
+            git tag -a "$VERSION" -m "$VERSION"
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists on origin, skipping push."
+          else
+            git push origin "$VERSION"
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
