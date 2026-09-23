@@ -30,24 +30,6 @@ jobs:
           BRANCH="${{ github.event.pull_request.head.ref }}"
           echo "version=${BRANCH#release/}" >> "$GITHUB_OUTPUT"
 
-      - name: Create and push tag
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Idempotent: a failure in a later step leaves the tag behind, and a
-          # re-run must be able to get past this step to retry what failed.
-          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
-            echo "Tag $VERSION already exists locally, skipping creation."
-          else
-            git tag -a "$VERSION" -m "$VERSION"
-          fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
-            echo "Tag $VERSION already exists on origin, skipping push."
-          else
-            git push origin "$VERSION"
-          fi
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -67,6 +49,13 @@ jobs:
             type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
+      # No `cache-to` here. This workflow is triggered by `pull_request`, and
+      # GitHub gives those runs a read-only Actions cache scope ("Cache mode:
+      # read" in Set up job) so that a PR cannot poison the cache main reads
+      # from. A gha cache export therefore always fails with "failed to reserve
+      # cache", which fails the whole build after the image has already been
+      # pushed. publish.yml runs on push to main, where the scope is writable,
+      # and is what keeps this cache warm.
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -75,8 +64,27 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
           platforms: linux/amd64
+
+      # Tagging runs after the image is published, so a failed build cannot
+      # leave a release tag behind pointing at something that was never
+      # shipped. The existence checks keep "Re-run jobs" working when a later
+      # step fails once the tag is already pushed.
+      - name: Create and push tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "Tag $VERSION already exists locally, skipping creation."
+          else
+            git tag -a "$VERSION" -m "$VERSION"
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists on origin, skipping push."
+          else
+            git push origin "$VERSION"
+          fi
 
       - name: Extract CHANGELOG section
         run: |
@@ -103,8 +111,13 @@ jobs:
 
       - name: Create GitHub Release
         run: |
-          gh release create "${{ steps.version.outputs.version }}" \
-            --title "${{ steps.version.outputs.version }}" \
-            --notes-file /tmp/release_notes.md
+          VERSION="${{ steps.version.outputs.version }}"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists, skipping creation."
+          else
+            gh release create "$VERSION" \
+              --title "$VERSION" \
+              --notes-file /tmp/release_notes.md
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
