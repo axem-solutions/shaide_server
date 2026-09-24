@@ -24,6 +24,7 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::routes::completions::completions,
         crate::routes::chat::chat_completions,
         crate::routes::responses::create_response,
+        crate::routes::embedding::create_embeddings,
         crate::routes::embedding::embed_code,
         crate::routes::embedding::delete_vectors,
         crate::routes::vector_db::remote_search,
