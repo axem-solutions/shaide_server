@@ -1,0 +1,8 @@
+# The Rust version for CI, local builds and the release image (see Dockerfile).
+# Without a pin, CI follows the runner's latest stable and new lints fail builds
+# that pass locally. Upgrade deliberately: change the version here and in the
+# Dockerfile's base image together.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

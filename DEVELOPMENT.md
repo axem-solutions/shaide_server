@@ -2,6 +2,16 @@
 
 This document describes how to develop this project
 
+## Rust toolchain
+
+The Rust version is pinned in `rust-toolchain.toml`. `rustup` installs it
+automatically the first time you run `cargo` in the repository, and CI uses the
+same version, so formatting and Clippy results match.
+
+To upgrade Rust, change the version in `rust-toolchain.toml` and the `rust:`
+base image tag in the `Dockerfile` in the same pull request, and fix any new
+Clippy findings there.
+
 ## Releasing
 
 Releases are handled by the AI agent. From within the products working directory:
