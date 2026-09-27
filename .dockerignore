@@ -10,6 +10,11 @@ target/
 .vscode/
 .claude/
 
+# The image's Rust version is pinned by the Dockerfile's base image tag. Inside
+# the image, rust-toolchain.toml would only make rustup download the rustfmt
+# and clippy components the release build does not use.
+rust-toolchain.toml
+
 # Docker's own files.
 Dockerfile
 .dockerignore

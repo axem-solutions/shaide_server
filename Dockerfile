@@ -1,4 +1,5 @@
-FROM rust:1.96.1 AS base
+# Keep in step with rust-toolchain.toml.
+FROM rust:1.98.1 AS base
 WORKDIR /app
 RUN cargo install cargo-chef --locked
 
