@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT total_input_token_count as \"total!: i64\"\n            FROM daily_usage_embedding_token\n            WHERE date = ? AND user = ? AND embedding_model = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "total!: i64",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "daily_usage_embedding_token",
+            "name": "total_input_token_count"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "447474c52644e379d85028b7e846f80c0652697ea86c5e6053c7992defd64aa5"
+}

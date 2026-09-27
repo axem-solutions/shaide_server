@@ -10,7 +10,9 @@ use shaide_common::api::{
     embedding_models::{
         DeleteEmbeddingModelRequest, DeleteEmbeddingModelResponse, InsertEmbeddingModelRequest,
         InsertEmbeddingModelResponse, ListEmbeddingModel, ListEmbeddingModelsResponse,
+        SetEmbeddingModelLimitRequest,
     },
+    error::OpenAiErrorResponse,
     models::{
         CreateModelRequest, CreateModelResponse, DeleteModelRequest, ListModelsResponse,
         OpenAIListModel, SetModelLimitsRequest, validate_reasoning_effort_values,
@@ -19,6 +21,8 @@ use shaide_common::api::{
 use shaide_db::{
     DbConn, InsertModelDAO, embedding_models::InsertEmbeddingModelDao, models::SetModelLimitsDao,
 };
+
+use hyper::StatusCode;
 
 use crate::{
     error::ShaideError,
@@ -155,6 +159,7 @@ pub async fn list_embedding_models(
         .map(|m| ListEmbeddingModel {
             id: m.id,
             name: m.name,
+            daily_input_token_limit: m.daily_input_token_limit,
         })
         .collect::<Vec<_>>();
     Ok(Json(ListEmbeddingModelsResponse { models }))
@@ -179,13 +184,16 @@ pub async fn insert_embedding_model(
         vector_size,
         platform,
         api_schema,
+        daily_input_token_limit,
     } = body;
+    validate_daily_limit(daily_input_token_limit)?;
     let insert_embedding_model_dao = InsertEmbeddingModelDao {
         url,
         name,
         vector_size,
         platform,
         api_schema,
+        daily_input_token_limit,
     };
     let id = db
         .insert_embedding_model(insert_embedding_model_dao)
@@ -211,6 +219,52 @@ pub async fn delete_embedding_model(
     Ok(Json(DeleteEmbeddingModelResponse {}))
 }
 
+#[utoipa::path(
+    patch,
+    path = "/v1/embedding-model-limits",
+    tag = "embedding models",
+    request_body = SetEmbeddingModelLimitRequest,
+    responses(
+        (status = 200, description = "Limit updated"),
+        (status = 400, description = "Invalid limit", body = OpenAiErrorResponse),
+        (status = 404, description = "Embedding model not found", body = OpenAiErrorResponse)
+    ),
+    security(("bearer_token" = []))
+)]
+pub async fn set_embedding_model_limit(
+    _admin: Admin,
+    State(db): State<DbConn>,
+    Json(SetEmbeddingModelLimitRequest {
+        name,
+        daily_input_token_limit,
+    }): Json<SetEmbeddingModelLimitRequest>,
+) -> Result<(), ShaideError> {
+    validate_daily_limit(daily_input_token_limit)?;
+    // Unlike the chat model limits, an unknown name is an error: silently
+    // updating nothing would leave a typo'd model unlimited.
+    if db
+        .set_embedding_model_limit(&name, daily_input_token_limit)
+        .await?
+    {
+        Ok(())
+    } else {
+        Err(ShaideError::request_rejection(
+            StatusCode::NOT_FOUND,
+            format!("The embedding model '{name}' does not exist"),
+            "model_not_found".to_owned(),
+        ))
+    }
+}
+
+fn validate_daily_limit(limit: Option<i64>) -> Result<(), ShaideError> {
+    match limit {
+        Some(limit) if limit < 0 => Err(ShaideError::bad_request(format!(
+            "daily_input_token_limit must not be negative, got {limit}"
+        ))),
+        _ => Ok(()),
+    }
+}
+
 pub fn model_router(db: DbConn) -> Router {
     Router::new()
         .route(
@@ -221,6 +275,10 @@ pub fn model_router(db: DbConn) -> Router {
         )
         .route("/v1/embedding_models", routing::get(list_embedding_models))
         .route("/v1/model-limits", routing::patch(set_model_limits))
+        .route(
+            "/v1/embedding-model-limits",
+            routing::patch(set_embedding_model_limit),
+        )
         .route(
             "/v1/embedding_model",
             routing::post(insert_embedding_model).delete(delete_embedding_model),

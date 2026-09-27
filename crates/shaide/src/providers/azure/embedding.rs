@@ -5,7 +5,7 @@ use tracing::debug;
 
 use crate::{
     providers::azure::{AzureClient, AzureError},
-    services::embedding::{EmbeddedSnippet, EmbeddedSnippets},
+    services::embedding::{EmbeddedSnippet, EmbeddedSnippets, EmbeddingOutput},
 };
 
 #[derive(Serialize)]
@@ -18,6 +18,13 @@ struct AzureEmbeddingRequest {
 #[derive(Deserialize)]
 struct AzureEmbeddingResponse {
     data: Vec<AzureEmbeddingData>,
+    #[serde(default)]
+    usage: Option<AzureEmbeddingUsage>,
+}
+
+#[derive(Deserialize)]
+struct AzureEmbeddingUsage {
+    prompt_tokens: u64,
 }
 
 #[derive(Deserialize)]
@@ -31,7 +38,7 @@ impl AzureClient {
         &self,
         embedding_model: &EmbeddingModelDao,
         texts: Vec<String>,
-    ) -> Result<Vec<Vec<f32>>, AzureError> {
+    ) -> Result<EmbeddingOutput, AzureError> {
         let input_count = texts.len();
         let request = AzureEmbeddingRequest {
             input: texts,
@@ -74,11 +81,14 @@ impl AzureClient {
                     .all(|(index, item)| item.index == index),
                 "Azure returned invalid embedding indices"
             );
-            Ok(response
-                .data
-                .into_iter()
-                .map(|item| item.embedding)
-                .collect())
+            Ok(EmbeddingOutput {
+                vectors: response
+                    .data
+                    .into_iter()
+                    .map(|item| item.embedding)
+                    .collect(),
+                prompt_tokens: response.usage.map(|usage| usage.prompt_tokens),
+            })
         }
     }
 
@@ -91,7 +101,7 @@ impl AzureClient {
             .iter()
             .map(|snippet| snippet.content.clone())
             .collect();
-        let predictions = self.embed(&embedding_model, texts).await?;
+        let predictions = self.embed(&embedding_model, texts).await?.vectors;
         assert_eq!(
             predictions.len(),
             snippets.len(),

@@ -1,6 +1,7 @@
 pub mod api_usage;
 pub mod daily_usage;
 pub mod embedding_models;
+mod embedding_usage;
 pub mod error;
 pub mod models;
 mod users;

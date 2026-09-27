@@ -10,6 +10,15 @@ use crate::{
     providers::{azure::get_azure_client, gcp::get_gcp_client, shaide::get_axem_client},
 };
 
+/// Vectors from an embedding provider, in input order, with the input token
+/// count the provider reported. Providers that do not report usage leave it
+/// `None`.
+#[derive(Debug)]
+pub struct EmbeddingOutput {
+    pub vectors: Vec<Vec<f32>>,
+    pub prompt_tokens: Option<u64>,
+}
+
 pub struct EmbeddedSnippet {
     pub snippet: CodeBlock,
     pub prediction: Vec<f32>,
@@ -63,7 +72,7 @@ impl EmbeddedSnippet {
 pub async fn embed(
     embedding_model: &EmbeddingModelDao,
     texts: Vec<String>,
-) -> Result<Vec<Vec<f32>>, ShaideError> {
+) -> Result<EmbeddingOutput, ShaideError> {
     let embeddings = match embedding_model.platform.as_deref() {
         Some("vertex") => {
             let gcp_client = get_gcp_client().await?;

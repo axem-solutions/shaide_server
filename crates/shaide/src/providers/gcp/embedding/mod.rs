@@ -15,7 +15,7 @@ const BACKOFF_ATTEMPT_LIMIT: usize = 2;
 
 use crate::{
     providers::gcp::{GcpClient, GcpError},
-    services::embedding::{EmbeddedSnippet, EmbeddedSnippets},
+    services::embedding::{EmbeddedSnippet, EmbeddedSnippets, EmbeddingOutput},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -126,7 +126,7 @@ impl GcpClient {
         &self,
         embedding_model: &EmbeddingModelDao,
         texts: Vec<String>,
-    ) -> Result<Vec<Vec<f32>>, GcpError> {
+    ) -> Result<EmbeddingOutput, GcpError> {
         let instances = texts
             .into_iter()
             .map(|content| GeminiEmbeddingContent { content })
@@ -142,11 +142,20 @@ impl GcpClient {
         loop {
             match response {
                 Ok(response) => {
-                    return Ok(response
+                    // Vertex reports a token count per input rather than a total.
+                    let prompt_tokens = response
                         .predictions
                         .iter()
-                        .map(|p| p.embeddings.values.clone())
-                        .collect());
+                        .map(|p| u64::from(p.embeddings.statistics.token_count))
+                        .sum();
+                    return Ok(EmbeddingOutput {
+                        vectors: response
+                            .predictions
+                            .iter()
+                            .map(|p| p.embeddings.values.clone())
+                            .collect(),
+                        prompt_tokens: Some(prompt_tokens),
+                    });
                 }
                 Err(EmbeddingError::CredentialsError(err)) => return Err(err.into()),
                 Err(EmbeddingError::TooManyRequests) => {
@@ -190,7 +199,7 @@ impl GcpClient {
             .iter()
             .map(|snippet| snippet.content.clone())
             .collect();
-        let predictions = self.embed(&embedding_model, texts).await?;
+        let predictions = self.embed(&embedding_model, texts).await?.vectors;
         // Vertex AI returns predictions in the same order as the request instances.
         assert_eq!(
             predictions.len(),

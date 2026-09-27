@@ -15,8 +15,15 @@ impl ExecuteServerCommand for ListEmbeddingModelsArg {
             .await?;
         let response_text = response.text().await?;
         let models_response: ListEmbeddingModelsResponse = serde_json::from_str(&response_text)?;
-        for ListEmbeddingModel { id, name } in models_response.models {
-            println!("Model id: {id} Model name: {name}")
+        for ListEmbeddingModel {
+            id,
+            name,
+            daily_input_token_limit,
+        } in models_response.models
+        {
+            let limit = daily_input_token_limit
+                .map_or_else(|| "unlimited".to_owned(), |limit| limit.to_string());
+            println!("Model id: {id} Model name: {name} Daily input token limit: {limit}")
         }
         Ok(())
     }

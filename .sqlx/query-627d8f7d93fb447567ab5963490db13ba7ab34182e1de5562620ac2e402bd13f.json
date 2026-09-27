@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO daily_usage_embedding_token (date, user, embedding_model, total_input_token_count)\n            VALUES (?, ?, ?, ?)\n            ON CONFLICT (date, user, embedding_model) DO UPDATE SET\n                total_input_token_count = total_input_token_count + excluded.total_input_token_count,\n                updated_at = DATETIME('now')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "627d8f7d93fb447567ab5963490db13ba7ab34182e1de5562620ac2e402bd13f"
+}

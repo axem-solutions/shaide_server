@@ -82,6 +82,7 @@ pub async fn remote_search(
     let embedding_model = db.get_embedding_model(embedding_model_id).await?;
     let embedding = embed(&embedding_model, vec![query])
         .await?
+        .vectors
         .into_iter()
         .next()
         .ok_or_else(|| {

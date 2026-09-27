@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT\n                id as \"id!\",\n                vector_size,\n                name as \"name: String\",\n                url as \"url: String\",\n                platform\n            FROM embedding_models",
+  "query": "SELECT\n                id as \"id!\",\n                vector_size,\n                name as \"name: String\",\n                url as \"url: String\",\n                platform,\n                daily_input_token_limit\n            FROM embedding_models WHERE id= ?",
   "describe": {
     "columns": [
       {
@@ -57,18 +57,30 @@
             "name": "platform"
           }
         }
+      },
+      {
+        "name": "daily_input_token_limit",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "embedding_models",
+            "name": "daily_input_token_limit"
+          }
+        }
       }
     ],
     "parameters": {
-      "Right": 0
+      "Right": 1
     },
     "nullable": [
       false,
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "64a74c5f2fb61bd7f24812f5b2c0e4f7b10d6038427e435eb8767b7b3ef3715c"
+  "hash": "85d5586cb0d4f06051fa7dbf73e0c36ff01f4c5cb4b7791c8cccca22320cfeaf"
 }

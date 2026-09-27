@@ -9,6 +9,8 @@ pub struct EmbeddingModelDao {
     pub name: String,
     pub vector_size: i64,
     pub platform: Option<String>,
+    /// Daily input tokens each user may embed with this model. `None` is unlimited.
+    pub daily_input_token_limit: Option<i64>,
 }
 
 #[derive(Clone)]
@@ -18,6 +20,7 @@ pub struct InsertEmbeddingModelDao {
     pub vector_size: i64,
     pub platform: Option<String>,
     pub api_schema: Option<String>,
+    pub daily_input_token_limit: Option<i64>,
 }
 
 impl DbConn {
@@ -29,7 +32,8 @@ impl DbConn {
                 vector_size,
                 name as "name: String",
                 url as "url: String",
-                platform
+                platform,
+                daily_input_token_limit
             FROM embedding_models"#,
         )
         .fetch_all(&self.pool)
@@ -42,12 +46,13 @@ impl DbConn {
         embedding_model: InsertEmbeddingModelDao,
     ) -> Result<i64, ShaideDBError> {
         let res = query!(
-            "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema, daily_input_token_limit) VALUES (?, ?, ?, ?, ?, ?)",
             embedding_model.url,
             embedding_model.name,
             embedding_model.vector_size,
             embedding_model.platform,
-            embedding_model.api_schema
+            embedding_model.api_schema,
+            embedding_model.daily_input_token_limit
         )
         .execute(&self.pool)
         .await?;
@@ -78,12 +83,30 @@ impl DbConn {
                 vector_size,
                 name as "name: String",
                 url as "url: String",
-                platform
+                platform,
+                daily_input_token_limit
             FROM embedding_models WHERE id= ?"#,
             embedding_model_id
         )
         .fetch_one(&self.pool)
         .await?;
         Ok(model)
+    }
+
+    /// Sets the daily input token limit of the embedding model called `name`;
+    /// `None` removes it. Returns whether a model with that name exists.
+    pub async fn set_embedding_model_limit(
+        &self,
+        name: &str,
+        daily_input_token_limit: Option<i64>,
+    ) -> Result<bool, ShaideDBError> {
+        let result = query!(
+            "UPDATE embedding_models SET daily_input_token_limit = ?, updated_at = DATETIME('now') WHERE name = ?",
+            daily_input_token_limit,
+            name
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected() > 0)
     }
 }

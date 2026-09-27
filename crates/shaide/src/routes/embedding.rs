@@ -8,6 +8,7 @@ use axum::{
     routing,
 };
 use base64::{Engine, engine::general_purpose::STANDARD};
+use chrono::Local;
 use hyper::StatusCode;
 use serde::Serialize;
 use shaide_common::api::embedding::{
@@ -15,7 +16,7 @@ use shaide_common::api::embedding::{
 };
 use shaide_common::api::error::OpenAiErrorResponse;
 use shaide_db::{DbConn, embedding_models::EmbeddingModelDao};
-use tracing::debug;
+use tracing::{debug, error, warn};
 
 use crate::{
     error::ShaideError,
@@ -113,6 +114,7 @@ pub async fn delete_vectors(
         (status = 200, description = "OpenAI-compatible embedding response", body = serde_json::Value),
         (status = 400, description = "Invalid request", body = OpenAiErrorResponse),
         (status = 401, description = "Authentication failed", body = OpenAiErrorResponse),
+        (status = 403, description = "Daily embedding token limit reached", body = OpenAiErrorResponse),
         (status = 404, description = "Embedding model not found", body = OpenAiErrorResponse),
         (status = 500, description = "Internal server error", body = OpenAiErrorResponse),
         (status = 503, description = "Provider unavailable", body = OpenAiErrorResponse)
@@ -134,13 +136,76 @@ pub async fn create_embeddings(
         "Handling OpenAI-compatible embedding request"
     );
 
-    let embeddings = embed(&embedding_model, texts).await?;
+    let estimated_tokens = estimate_tokens(&texts);
+    let date = Local::now().format("%Y-%m-%d").to_string();
+    if let Some(limit) = embedding_model.daily_input_token_limit {
+        let used = db
+            .get_embedding_daily_usage(&date, auth.user.id, embedding_model.id)
+            .await?;
+        check_embedding_limit(&embedding_model.name, limit, used, estimated_tokens)?;
+    }
+
+    let output = embed(&embedding_model, texts).await?;
+    let prompt_tokens = output.prompt_tokens.unwrap_or_else(|| {
+        warn!(
+            embedding_model = %embedding_model.name,
+            estimated_tokens,
+            "Embedding provider reported no usage; recording the estimate"
+        );
+        estimated_tokens
+    });
+    // Recorded for every model, limited or not, so a limit set later applies to
+    // the whole day's usage.
+    if let Err(error) = db
+        .add_embedding_daily_usage(
+            &date,
+            auth.user.id,
+            embedding_model.id,
+            i64::try_from(prompt_tokens).unwrap_or(i64::MAX),
+        )
+        .await
+    {
+        error!(error = %error, "Could not record embedding usage");
+    }
+
     Ok(embedding_response(
         request.model,
-        embeddings,
+        output.vectors,
         request.encoding_format.unwrap_or_default(),
+        prompt_tokens,
     )
     .into_response())
+}
+
+/// A conservative stand-in for the provider's token count, used to check the
+/// limit before the request is sent and when a provider reports no usage:
+/// one token per four bytes of UTF-8, and at least one per input. BPE
+/// tokenizers average about four characters per token on English text, and
+/// counting bytes rather than characters overestimates non-ASCII text.
+fn estimate_tokens(texts: &[String]) -> u64 {
+    texts
+        .iter()
+        .map(|text| (text.len() as u64).div_ceil(4).max(1))
+        .sum()
+}
+
+/// Rejects a request that would take the user past the model's daily limit.
+/// Counting this request's estimate, not only past usage, also stops a single
+/// oversized request.
+fn check_embedding_limit(
+    model_name: &str,
+    limit: i64,
+    used: i64,
+    estimated_tokens: u64,
+) -> Result<(), ShaideError> {
+    let estimated = i64::try_from(estimated_tokens).unwrap_or(i64::MAX);
+    if used.saturating_add(estimated) > limit {
+        return Err(ShaideError::model_usage_limit_reached(format!(
+            "Daily embedding token limit reached on model: {model_name} \
+             (limit {limit}, used {used}, this request about {estimated})"
+        )));
+    }
+    Ok(())
 }
 
 /// The providers embed text, so only string input is accepted. OpenAI's token
@@ -225,7 +290,6 @@ struct EmbeddingObject {
     embedding: EmbeddingVector,
 }
 
-/// The providers do not report token counts, so usage is reported as zero.
 #[derive(Debug, Serialize)]
 struct EmbeddingUsage {
     prompt_tokens: u32,
@@ -250,7 +314,9 @@ fn embedding_response(
     model: String,
     embeddings: Vec<Vec<f32>>,
     encoding_format: EncodingFormat,
+    prompt_tokens: u64,
 ) -> EmbeddingResponse {
+    let prompt_tokens = u32::try_from(prompt_tokens).unwrap_or(u32::MAX);
     let data = embeddings
         .into_iter()
         .enumerate()
@@ -269,8 +335,8 @@ fn embedding_response(
         model,
         data,
         usage: EmbeddingUsage {
-            prompt_tokens: 0,
-            total_tokens: 0,
+            prompt_tokens,
+            total_tokens: prompt_tokens,
         },
     }
 }
@@ -306,8 +372,8 @@ mod tests {
     use temp_testdir::TempDir;
 
     use super::{
-        MAX_EMBEDDING_INPUTS, check_dimensions, embedding_response, embedding_texts,
-        find_embedding_model,
+        MAX_EMBEDDING_INPUTS, check_dimensions, check_embedding_limit, embedding_response,
+        embedding_texts, estimate_tokens, find_embedding_model,
     };
     use crate::error::ShaideError;
 
@@ -325,6 +391,7 @@ mod tests {
             name: "text-embedding-3-large".to_owned(),
             vector_size,
             platform: Some("foundry".to_owned()),
+            daily_input_token_limit: None,
         }
     }
 
@@ -391,6 +458,7 @@ mod tests {
             "text-embedding-3-large".to_owned(),
             vec![vec![0.5, -1.0], vec![2.0, 0.25]],
             EncodingFormat::Float,
+            7,
         );
         let json = serde_json::to_value(response).unwrap();
 
@@ -403,7 +471,7 @@ mod tests {
                     {"object": "embedding", "index": 0, "embedding": [0.5, -1.0]},
                     {"object": "embedding", "index": 1, "embedding": [2.0, 0.25]}
                 ],
-                "usage": {"prompt_tokens": 0, "total_tokens": 0}
+                "usage": {"prompt_tokens": 7, "total_tokens": 7}
             })
         );
     }
@@ -412,18 +480,27 @@ mod tests {
     #[test]
     fn base64_response_decodes_to_the_same_floats() {
         let vector = vec![0.5_f32, -1.0, 3.25];
-        let response =
-            embedding_response("m".to_owned(), vec![vector.clone()], EncodingFormat::Base64);
+        let response = embedding_response(
+            "m".to_owned(),
+            vec![vector.clone()],
+            EncodingFormat::Base64,
+            1,
+        );
         let json = serde_json::to_value(response).unwrap();
 
         let encoded = json["data"][0]["embedding"]
             .as_str()
             .expect("base64 string");
-        let decoded: Vec<f32> = STANDARD
-            .decode(encoded)
-            .unwrap()
-            .chunks_exact(4)
-            .map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap()))
+        // as_chunks, not chunks_exact(4): Rust 1.98's clippy::chunks_exact_to_as_chunks.
+        let bytes = STANDARD.decode(encoded).unwrap();
+        let (chunks, rest) = bytes.as_chunks::<4>();
+        assert!(
+            rest.is_empty(),
+            "base64 payload is not whole float32 values"
+        );
+        let decoded: Vec<f32> = chunks
+            .iter()
+            .map(|chunk| f32::from_le_bytes(*chunk))
             .collect();
         assert_eq!(decoded, vector);
     }
@@ -440,6 +517,7 @@ mod tests {
             vector_size: 3072,
             platform: Some("foundry".to_owned()),
             api_schema: Some("open_ai".to_owned()),
+            daily_input_token_limit: None,
         })
         .await
         .unwrap();
@@ -453,5 +531,106 @@ mod tests {
             error_parts(find_embedding_model(&db, "missing").await.unwrap_err()).await;
         assert_eq!(status, StatusCode::NOT_FOUND);
         assert_eq!(body.error.code.as_deref(), Some("model_not_found"));
+    }
+
+    #[test]
+    fn token_estimate_is_conservative() {
+        assert_eq!(estimate_tokens(&["abcd".to_owned()]), 1);
+        assert_eq!(estimate_tokens(&["abcde".to_owned()]), 2);
+        // Every input costs at least one token.
+        assert_eq!(estimate_tokens(&["a".to_owned(), "b".to_owned()]), 2);
+        // Bytes, not characters: four two-byte characters count as two tokens.
+        assert_eq!(estimate_tokens(&["éééé".to_owned()]), 2);
+    }
+
+    #[tokio::test]
+    async fn embedding_limit_counts_the_request_itself() {
+        assert!(
+            check_embedding_limit("m", 100, 0, 100).is_ok(),
+            "reaching the limit exactly is allowed"
+        );
+        assert!(check_embedding_limit("m", 100, 60, 40).is_ok());
+
+        for (used, estimated) in [(100, 1), (60, 41), (0, 101)] {
+            let (status, body) =
+                error_parts(check_embedding_limit("m", 100, used, estimated).unwrap_err()).await;
+            assert_eq!(status, StatusCode::FORBIDDEN, "used {used} + {estimated}");
+            assert_eq!(
+                body.error.code.as_deref(),
+                Some("model_usage_limit_reached")
+            );
+        }
+    }
+
+    // Usage accumulates per user, embedding model and day, starting from zero.
+    #[tokio::test]
+    async fn embedding_usage_accumulates_per_user_model_and_day() {
+        let temp_dir = TempDir::default();
+        let db = DbConn::new(&temp_dir.join("shaide-test.sqlite"))
+            .await
+            .unwrap();
+        let expiry = chrono::Utc::now() + chrono::Duration::days(1);
+        let alice = db
+            .create_user("alice".to_owned(), "hash".to_owned(), expiry)
+            .await
+            .unwrap();
+        let bob = db
+            .create_user("bob".to_owned(), "hash".to_owned(), expiry)
+            .await
+            .unwrap();
+        let model = db
+            .insert_embedding_model(InsertEmbeddingModelDao {
+                url: "https://example.com/embeddings".to_owned(),
+                name: "text-embedding-3-large".to_owned(),
+                vector_size: 3072,
+                platform: Some("foundry".to_owned()),
+                api_schema: Some("open_ai".to_owned()),
+                daily_input_token_limit: Some(1000),
+            })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            db.get_embedding_daily_usage("2026-09-27", alice, model)
+                .await
+                .unwrap(),
+            0
+        );
+        db.add_embedding_daily_usage("2026-09-27", alice, model, 30)
+            .await
+            .unwrap();
+        db.add_embedding_daily_usage("2026-09-27", alice, model, 12)
+            .await
+            .unwrap();
+        db.add_embedding_daily_usage("2026-09-27", bob, model, 5)
+            .await
+            .unwrap();
+        db.add_embedding_daily_usage("2026-09-28", alice, model, 7)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            db.get_embedding_daily_usage("2026-09-27", alice, model)
+                .await
+                .unwrap(),
+            42
+        );
+        assert_eq!(
+            db.get_embedding_daily_usage("2026-09-27", bob, model)
+                .await
+                .unwrap(),
+            5
+        );
+        assert_eq!(
+            db.get_embedding_daily_usage("2026-09-28", alice, model)
+                .await
+                .unwrap(),
+            7
+        );
+
+        let found = find_embedding_model(&db, "text-embedding-3-large")
+            .await
+            .unwrap();
+        assert_eq!(found.daily_input_token_limit, Some(1000));
     }
 }

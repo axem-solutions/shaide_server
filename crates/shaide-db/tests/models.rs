@@ -88,8 +88,10 @@ async fn responses_endpoint_survives_round_trip() {
     assert_eq!(stored_model.responses_endpoint, expected_endpoint);
 }
 
+// Reverting every migration, newest first, must leave an empty database, so
+// each migration has to undo exactly what it created.
 #[tokio::test]
-async fn baseline_migration_is_reversible() {
+async fn migrations_are_reversible() {
     let temp_dir = TempDir::default();
     let db_file = temp_dir.join("revert.sqlite");
     let db = test_db(&db_file).await;
@@ -98,13 +100,25 @@ async fn baseline_migration_is_reversible() {
     let mut conn = SqliteConnection::connect(&format!("sqlite://{}", db_file.display()))
         .await
         .expect("test database should be reachable");
-    let down_migration = MIGRATOR
+    let mut down_migrations: Vec<_> = MIGRATOR
         .iter()
-        .find(|migration| migration.migration_type.is_down_migration())
-        .expect("baseline should have a down migration");
-    conn.revert(&MIGRATOR.table_name, down_migration)
-        .await
-        .expect("baseline migration should revert");
+        .filter(|migration| migration.migration_type.is_down_migration())
+        .collect();
+    assert!(
+        !down_migrations.is_empty(),
+        "migrations should have down migrations"
+    );
+    down_migrations.sort_by_key(|migration| std::cmp::Reverse(migration.version));
+    for migration in down_migrations {
+        conn.revert(&MIGRATOR.table_name, migration)
+            .await
+            .unwrap_or_else(|error| {
+                panic!(
+                    "migration {} ({}) should revert: {error}",
+                    migration.version, migration.description
+                )
+            });
+    }
 
     let remaining_tables: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM sqlite_schema

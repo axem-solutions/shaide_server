@@ -191,6 +191,7 @@ Create an embedding model
 * `--max-embedding-model-text-len <MAX_EMBEDDING_MODEL_TEXT_LEN>`
 * `--platform <PLATFORM>`
 * `--api-schema <API_SCHEMA>`
+* `--daily-input-token-limit <DAILY_INPUT_TOKEN_LIMIT>` — Daily input tokens each user may embed with this model. Omit for unlimited
 * `--remote <REMOTE>`
 * `--admin-password <ADMIN_PASSWORD>` — Password for the built-in admin user
 

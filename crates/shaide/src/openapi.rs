@@ -21,6 +21,7 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::routes::models::list_embedding_models,
         crate::routes::models::insert_embedding_model,
         crate::routes::models::delete_embedding_model,
+        crate::routes::models::set_embedding_model_limit,
         crate::routes::completions::completions,
         crate::routes::chat::chat_completions,
         crate::routes::responses::create_response,
