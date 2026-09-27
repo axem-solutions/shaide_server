@@ -5,13 +5,20 @@ use tracing::debug;
 
 use crate::{
     providers::shaide::{AxemClient, ShaideProviderError},
-    services::embedding::{EmbeddedSnippet, EmbeddedSnippets},
+    services::embedding::{EmbeddedSnippet, EmbeddedSnippets, EmbeddingOutput},
 };
 
 #[derive(Deserialize)]
 struct OpenAIEmbeddingResponse {
     data: Vec<OpenAIEmbeddingData>,
     model: String,
+    #[serde(default)]
+    usage: Option<OpenAIEmbeddingUsage>,
+}
+
+#[derive(Deserialize)]
+struct OpenAIEmbeddingUsage {
+    prompt_tokens: u64,
 }
 
 #[derive(Serialize)]
@@ -31,7 +38,7 @@ impl AxemClient {
         &self,
         embedding_model: &EmbeddingModelDao,
         texts: Vec<String>,
-    ) -> Result<Vec<Vec<f32>>, ShaideProviderError> {
+    ) -> Result<EmbeddingOutput, ShaideProviderError> {
         let request = OpenAIEmbeddingRequest {
             input: texts,
             model: embedding_model.name.to_string(),
@@ -75,11 +82,14 @@ impl AxemClient {
                     .all(|(index, item)| item.index == index),
                 "Shaide returned invalid embedding indices"
             );
-            Ok(openai_response
-                .data
-                .into_iter()
-                .map(|item| item.embedding)
-                .collect())
+            Ok(EmbeddingOutput {
+                vectors: openai_response
+                    .data
+                    .into_iter()
+                    .map(|item| item.embedding)
+                    .collect(),
+                prompt_tokens: openai_response.usage.map(|usage| usage.prompt_tokens),
+            })
         }
     }
 
@@ -92,7 +102,7 @@ impl AxemClient {
             .iter()
             .map(|snippet| snippet.content.clone())
             .collect();
-        let embeddings = self.embed(&embedding_model, texts).await?;
+        let embeddings = self.embed(&embedding_model, texts).await?.vectors;
         assert_eq!(
             embeddings.len(),
             snippets.len(),

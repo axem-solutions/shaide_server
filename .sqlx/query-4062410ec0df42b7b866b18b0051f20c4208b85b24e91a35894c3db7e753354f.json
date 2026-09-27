@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO embedding_models (url, name, vector_size, platform, api_schema, daily_input_token_limit) VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "4062410ec0df42b7b866b18b0051f20c4208b85b24e91a35894c3db7e753354f"
+}

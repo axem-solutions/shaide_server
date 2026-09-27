@@ -5,6 +5,9 @@ use utoipa::ToSchema;
 pub struct ListEmbeddingModel {
     pub id: i64,
     pub name: String,
+    /// Daily input tokens each user may embed with this model; `null` is unlimited.
+    #[serde(default)]
+    pub daily_input_token_limit: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug, Default)]
@@ -19,6 +22,10 @@ pub struct InsertEmbeddingModelRequest {
     pub vector_size: i64,
     pub platform: Option<String>,
     pub api_schema: Option<String>,
+    /// Daily input tokens each user may embed with this model; omitted or
+    /// `null` is unlimited.
+    #[serde(default)]
+    pub daily_input_token_limit: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug, Default)]
@@ -33,3 +40,11 @@ pub struct DeleteEmbeddingModelRequest {
 
 #[derive(Serialize, Deserialize, ToSchema, Clone, Debug, Default)]
 pub struct DeleteEmbeddingModelResponse {}
+
+/// Sets or removes the daily input token limit of an embedding model.
+#[derive(Serialize, Deserialize, ToSchema, Clone, Debug, Default)]
+pub struct SetEmbeddingModelLimitRequest {
+    pub name: String,
+    /// The new limit. `null` removes it, making the model unlimited.
+    pub daily_input_token_limit: Option<i64>,
+}

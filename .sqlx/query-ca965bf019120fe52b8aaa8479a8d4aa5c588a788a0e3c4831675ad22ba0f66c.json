@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE embedding_models SET daily_input_token_limit = ?, updated_at = DATETIME('now') WHERE name = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ca965bf019120fe52b8aaa8479a8d4aa5c588a788a0e3c4831675ad22ba0f66c"
+}

@@ -23,6 +23,10 @@ pub struct CreateEmbeddingModelArgs {
 
     #[arg(long)]
     pub api_schema: Option<String>,
+
+    /// Daily input tokens each user may embed with this model. Omit for unlimited.
+    #[arg(long)]
+    pub daily_input_token_limit: Option<i64>,
 }
 
 impl CreateEmbeddingModelArgs {
@@ -33,6 +37,7 @@ impl CreateEmbeddingModelArgs {
             vector_size: self.vector_size,
             platform: Some(self.platform),
             api_schema: self.api_schema,
+            daily_input_token_limit: self.daily_input_token_limit,
         }
     }
 }
