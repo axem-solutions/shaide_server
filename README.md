@@ -146,7 +146,7 @@ docker compose up
 For development, you can start the supporting services with:
 
 ```sh
-docker compose up -d caddy vectordb control-panel mcp-gateway
+docker compose up -d vectordb control-panel mcp-gateway
 ```
 
 and when you are done with development, or just want to kill the processes
@@ -154,6 +154,8 @@ and when you are done with development, or just want to kill the processes
 ```sh
 docker compose down
 ```
+
+The Qdrant dashboard is available at http://localhost:6333/dashboard.
 
 # Documentation
 
