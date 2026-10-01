@@ -1,12 +1,6 @@
 name: shaide-local-infra
 
 services:
-  caddy:
-    image: caddy:2
-    ports:
-      - "0.0.0.0:80:80"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
   backend:
     build:
       context: .
@@ -33,7 +27,6 @@ services:
       - ${HOME}/.config/axem:/root/.config/axem
     depends_on:
       - vectordb
-      - caddy
 
   vectordb:
     image: qdrant/qdrant

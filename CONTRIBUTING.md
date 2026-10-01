@@ -50,7 +50,7 @@ just dev
 Alternatively, start only the backing services and run the server directly:
 
 ```bash
-docker compose up -d caddy vectordb s3
+docker compose up -d vectordb
 cargo run
 ```
 
