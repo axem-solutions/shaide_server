@@ -12,7 +12,7 @@ The following table describes the current environment variables that we use.
 | JWT_SECRET            | No        | Secret used to sign user JWTs; must be at least 32 bytes         |
 | SHAIDE_SERVER_UI_FQDN | No        | The server UI address                                            |
 | SHAIDE_SERVER_UI_PORT | No        | The server UI port                                               |
-| WEBAPP_URL            | No        | WebApp upstream URL for the `/app` reverse proxy                 |
+| WEBAPP_URL            | Yes       | WebApp upstream URL for the `/app` reverse proxy (unset: no proxy) |
 | GCP_API_KEY           | Yes       | GCP API key/token (if empty, auth must be provided by other means) |
 | HOST                  | Yes       | Server bind host (default: `0.0.0.0`)                            |
 | PORT                  | Yes       | Server bind port (default: `8080`)                               |
@@ -35,12 +35,12 @@ VECTOR_DB_URL=http://localhost:6334
 DATABASE_URL=sqlite://crates/shaide-db/schema.sqlite
 ```
 
-`WEBAPP_URL` must be reachable from the server. These local examples assume a
-WebApp running on host port 3001. `just dev` defaults to `http://localhost:3001`,
-and Docker Compose defaults to `http://host.docker.internal:3001`; export
-`WEBAPP_URL` to override either default. Start the WebApp separately to use `/app`.
-Include any upstream base path in the URL: `/app/assets/main.js` is forwarded to
-`<WEBAPP_URL>/assets/main.js`.
+`WEBAPP_URL` is optional: without it the server does not serve `/app`. It must
+be reachable from the server. `just dev app` and `just stack app` start the
+WebApp container and set it for you (`http://localhost:3001` natively,
+`http://webapp:8787` in compose); export `WEBAPP_URL` to point `just dev` at a
+WebApp you run yourself. Include any upstream base path in the URL:
+`/app/assets/main.js` is forwarded to `<WEBAPP_URL>/assets/main.js`.
 
 # Authentication
 
@@ -137,33 +137,43 @@ docker run -p 8080:8080 \
 
 ## Docker compose
 
-To run all services with compose, you can:
+`compose.yaml` mirrors the k8s deployment and runs in one of two modes:
 
 ```sh
-docker compose up
+# Everything the shaide server depends on, to run the server natively
+SHAIDE_SERVER_FQDN=host.docker.internal docker compose up -d
+cargo run
+
+# Every service in containers, the shaide server included
+docker compose --profile server up -d --build
 ```
 
-Compose builds the server from the `dev` Docker target, which adds `azure-cli`
-for local Azure authentication. Release images are built from the default
-`runtime` target and do not include it.
+`just dev` and `just stack` wrap these. The webapp (`app` profile) and the MCP
+gateway (`mcp` profile) are optional: pass the profile names to the recipes,
+e.g. `just dev app mcp`, or `--profile app` to compose. When running the
+containerized server with the webapp, also set `WEBAPP_URL=http://webapp:8787`.
 
-The containerized server keeps its data in `~/.config/axem-docker`, separate
-from the native server's `~/.config/axem`, and reads a copy of `~/.azure`
-(create the directory if you do not use Azure).
+The containerized server is built from the `dev` Docker target, which adds
+`azure-cli`. It keeps its data in `~/.config/axem-docker`, separate from the
+native server's `~/.config/axem`, and reads a copy of `~/.azure` (create the
+directory if you do not use Azure).
 
-For development, you can start the supporting services with:
+Images default to a local build of this repository and the released WebApp and
+Control Panel. To switch, set `SHAIDE_SERVER_IMAGE`, `SHAIDE_WEBAPP_IMAGE` or
+`SHAIDE_CONTROL_PANEL_IMAGE`, for example:
 
 ```sh
-docker compose up -d vectordb control-panel mcp-gateway
+export SHAIDE_SERVER_IMAGE=ghcr.io/axem-solutions/shaide_server:v1.0.0
+export SHAIDE_CONTROL_PANEL_IMAGE=shaide_control_panel:latest
 ```
 
-and when you are done with development, or just want to kill the processes
-
-```sh
-docker compose down
-```
+Released server images are built from the `runtime` target and do not include
+`azure-cli`.
 
 The Qdrant dashboard is available at http://localhost:6333/dashboard.
+
+Stop everything with `just services-down` or
+`docker compose --profile '*' down`.
 
 # Documentation
 
@@ -182,17 +192,18 @@ To run commonly used commands, you can use
 
 ```
 Available recipes:
-    check                  # Run formatting, Clippy, and tests
+    check                  # Run the same checks as CI
     db-migrate             # Apply all pending migrations
     db-new name            # Create a new migration
     db-prepare             # Regenerate SQLx offline query data
     db-revert              # Revert the latest migration
     db-shell [database]    # Open a SQLite database
     default                # Default recipe
-    dev                    # Start local dependencies and run the server
+    dev *profiles          # Start local dependencies and run the server natively
     docker-build [tag]     # Build a local server image
-    services-down          # Stop local backend dependencies
-    services-up            # Start local backend dependencies
+    services-down          # Stop every compose service
+    services-up *profiles  # Start what a natively running server needs
+    stack *profiles        # Run every service in containers, the server too
 ```
 
 `db-shell` defaults to the server database under `~/.config/axem/shaide`, and

@@ -13,23 +13,32 @@ check:
     SQLX_OFFLINE=true cargo clippy --workspace --all-targets --all-features -- -D warnings
     SQLX_OFFLINE=true cargo test --workspace --all-features
 
-# Start local backend dependencies
-services-up:
-    docker compose up -d vectordb
+# Start what a natively running shaide server needs; optional profiles: app, mcp
+[env("SHAIDE_SERVER_FQDN", "host.docker.internal")]
+services-up *profiles:
+    # Free the server port in case the containerized server is still running.
+    docker compose --profile server stop shaide_server
+    docker compose {{ prepend("--profile ", profiles) }} up -d --remove-orphans
 
-# Stop local backend dependencies
+# Stop every compose service, including the optional ones
 services-down:
-    docker compose down
+    docker compose --profile '*' down --remove-orphans
 
-# Start local dependencies and run the server
+# Start local dependencies and run the server natively; optional profiles: app, mcp
 [env("ADMIN_PASSWORD", "admin")]
 [env("JWT_SECRET", "local-development-jwt-secret-change-me")]
 [env("RUST_LIB_BACKTRACE", "1")]
 [env("RUST_SPANTRACE", "0")]
 [env("SHAIDE_SERVER_UI_FQDN", "localhost")]
 [env("SHAIDE_SERVER_UI_PORT", "3000")]
-dev: services-up
-    WEBAPP_URL="${WEBAPP_URL:-http://localhost:3001}" cargo run
+dev *profiles: (services-up profiles)
+    {{ if profiles =~ '(^|\s)app(\s|$)' { 'export WEBAPP_URL="${WEBAPP_URL:-http://localhost:3001}";' } else { '' } }} cargo run
+
+# Run every service in containers, the server too; optional profiles: app, mcp
+stack *profiles:
+    {{ if profiles =~ '(^|\s)app(\s|$)' { 'export WEBAPP_URL=http://webapp:8787;' } else { '' } }} \
+    docker compose --profile server {{ prepend("--profile ", profiles) }} up -d --remove-orphans \
+        {{ if env("SHAIDE_SERVER_IMAGE", "") == "" { "--build" } else { "" } }}
 
 # Regenerate SQLx offline query data
 db-prepare:

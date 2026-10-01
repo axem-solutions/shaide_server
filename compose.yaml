@@ -1,24 +1,38 @@
 name: shaide-local-infra
 
+# Mirrors the k8s deployment. Two ways to run it:
+# - `docker compose up -d` starts everything the shaide server depends on, so
+#   the server itself can run natively (`just dev`).
+# - `docker compose --profile server up -d` also runs the server (`just stack`).
+# Optional services: `--profile app` (webapp) and `--profile mcp` (MCP gateway).
+#
+# Images default to a local build of this repo and the released images of the
+# other components. Override them with SHAIDE_SERVER_IMAGE, SHAIDE_WEBAPP_IMAGE
+# and SHAIDE_CONTROL_PANEL_IMAGE, e.g. SHAIDE_WEBAPP_IMAGE=shaide_webapp:latest.
+
 services:
-  backend:
+  shaide_server:
+    profiles: [server]
     build:
       context: .
       dockerfile: Dockerfile
       target: dev
-    image: shaide_server:latest
+    image: ${SHAIDE_SERVER_IMAGE:-shaide_server:dev}
     extra_hosts:
-      - "control-panel.localhost:host-gateway"
       - "host.docker.internal:host-gateway"
     ports:
       - "${SHAIDE_SERVER_PORT:-8080}:${SHAIDE_SERVER_PORT:-8080}"
     environment:
+      # Bootstraps the initial `admin` user. JWT_SECRET signs user JWTs and
+      # must be at least 32 bytes -- config.rs asserts on it at startup.
       ADMIN_PASSWORD: admin
       JWT_SECRET: local-development-jwt-secret-change-me
       PORT: ${SHAIDE_SERVER_PORT:-8080}
-      SHAIDE_SERVER_UI_FQDN: control-panel.localhost
+      SHAIDE_SERVER_UI_FQDN: control-panel
       SHAIDE_SERVER_UI_PORT: 3000
-      WEBAPP_URL: ${WEBAPP_URL:-http://host.docker.internal:3001}
+      # Passed through only when set, since the `/app` proxy is optional. Use
+      # http://webapp:8787 together with the `app` profile.
+      WEBAPP_URL:
       VECTOR_DB_URL: http://vectordb:6334
       RUST_BACKTRACE: full
       RUST_LIB_BACKTRACE: "1"
@@ -41,6 +55,14 @@ services:
           create_host_path: false
     depends_on:
       - vectordb
+      - control-panel
+
+  webapp:
+    profiles: [app]
+    image: ${SHAIDE_WEBAPP_IMAGE:-ghcr.io/axem-solutions/shaide-webapp:v0.2.0}
+    ports:
+      # Host port 3001 is where a natively running shaide server expects it.
+      - "3001:8787"
 
   vectordb:
     image: qdrant/qdrant
@@ -49,16 +71,22 @@ services:
       - "6334:6334"
 
   control-panel:
-    image: ghcr.io/axem-solutions/control_panel:dev
+    image: ${SHAIDE_CONTROL_PANEL_IMAGE:-ghcr.io/axem-solutions/shaide_control_panel:v1.0.0}
     ports:
       - "3000:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      SHAIDE_SERVER_FQDN: ${SHAIDE_SERVER_FQDN:-backend}
+      # `shaide_server` for the containerized server; `just dev` sets it to
+      # `host.docker.internal` to reach the native one.
+      SHAIDE_SERVER_FQDN: ${SHAIDE_SERVER_FQDN:-shaide_server}
       SHAIDE_SERVER_PORT: ${SHAIDE_SERVER_PORT:-8080}
+      # HMAC key for the signed session cookie. Must be at least 32 characters
+      # or the Control Panel refuses to sign any session and every login fails.
+      SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-change-me}
 
   mcp-gateway:
+    profiles: [mcp]
     image: docker/mcp-gateway:latest
     use_api_socket: true
     command:

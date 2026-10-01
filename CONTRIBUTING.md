@@ -41,26 +41,20 @@ git switch -c <issue-id>/short-description
 ```
 
 Configure the environment variables described in `README.md`. To start the
-local dependencies and server with the repository recipes, run:
+local dependencies and run the server natively with the repository recipes, run:
 
 ```bash
-just dev
+just dev          # add `app` and/or `mcp` to start the optional services
 ```
 
-Alternatively, start only the backing services and run the server directly:
+Or, run every service in a container, the server included:
 
 ```bash
-docker compose up -d vectordb
-cargo run
+just stack
 ```
 
-Or, run every service in a container with Docker Compose:
-
-```bash
-docker compose up
-```
-
-Stop the backing services with `docker compose down` or `just services-down`.
+See the Docker compose section of `README.md` for the plain `docker compose`
+commands. Stop the services with `just services-down`.
 
 ## Making changes
 
