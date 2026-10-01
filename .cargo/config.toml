@@ -1,0 +1,5 @@
+[env]
+# Build sqlx's compile-time-checked queries against the committed `.sqlx`
+# offline cache instead of a live database. Lets `cargo` and rust-analyzer
+# check the workspace without a running/seeded database.
+SQLX_OFFLINE = "true"

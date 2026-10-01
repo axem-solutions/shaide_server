@@ -10,8 +10,8 @@ default:
 # Run the same checks as CI
 check:
     cargo fmt --all -- --check
-    SQLX_OFFLINE=true cargo clippy --workspace --all-targets --all-features -- -D warnings
-    SQLX_OFFLINE=true cargo test --workspace --all-features
+    cargo clippy --workspace --all-targets --all-features -- -D warnings
+    cargo test --workspace --all-features
 
 # Start what a natively running shaide server needs; optional profiles: app, mcp
 [env("SHAIDE_SERVER_FQDN", "host.docker.internal")]
