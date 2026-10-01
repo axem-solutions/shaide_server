@@ -82,8 +82,10 @@ sqlx migrate add --source crates/shaide-db/migrations -r migration_name
 ```
 
 Migrations must preserve existing user data and include both up and down paths.
-After changing a migration or a checked SQL query, apply the migration and
-refresh SQLx's offline metadata:
+`cargo` builds against the committed `.sqlx` offline metadata
+(`.cargo/config.toml` sets `SQLX_OFFLINE=true`), so a new or changed `query!`
+does not compile until that metadata is refreshed. After changing a migration
+or a checked SQL query, apply the migration and refresh the metadata:
 
 ```bash
 just db-migrate
