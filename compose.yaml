@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     image: shaide_server:latest
     extra_hosts:
       - "control-panel.localhost:host-gateway"
@@ -25,6 +26,8 @@ services:
     volumes:
       - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
       - ${HOME}/.config/axem:/root/.config/axem
+      # `az` refreshes its token cache in here, so this cannot be mounted read-only.
+      - ${HOME}/.azure:/root/.azure
     depends_on:
       - vectordb
 
