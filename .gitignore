@@ -16,3 +16,4 @@ cargo-flamegraph.stacks
 server/shaide-webserver/ui/
 .env
 .codex
+.vscode
