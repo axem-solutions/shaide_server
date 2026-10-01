@@ -147,6 +147,10 @@ Compose builds the server from the `dev` Docker target, which adds `azure-cli`
 for local Azure authentication. Release images are built from the default
 `runtime` target and do not include it.
 
+The containerized server keeps its data in `~/.config/axem-docker`, separate
+from the native server's `~/.config/axem`, and reads a copy of `~/.azure`
+(create the directory if you do not use Azure).
+
 For development, you can start the supporting services with:
 
 ```sh

@@ -23,11 +23,22 @@ services:
       RUST_BACKTRACE: full
       RUST_LIB_BACKTRACE: "1"
       RUST_SPANTRACE: "0"
+    # The container runs as root, so `az` gets a private copy of the host's
+    # Azure config to refresh tokens in instead of writing root-owned files
+    # into ~/.azure.
+    command: ["sh", "-c", "cp -r /mnt/host-azure /root/.azure && exec shaide"]
     volumes:
       - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
-      - ${HOME}/.config/axem:/root/.config/axem
-      # `az` refreshes its token cache in here, so this cannot be mounted read-only.
-      - ${HOME}/.azure:/root/.azure
+      # Kept apart from ~/.config/axem, which `just dev` uses: the container runs
+      # as root and would leave root-owned files the native server cannot write.
+      - ${HOME}/.config/axem-docker:/root/.config/axem
+      - type: bind
+        source: ${HOME}/.azure
+        target: /mnt/host-azure
+        read_only: true
+        bind:
+          # Fail instead of letting Docker create a root-owned ~/.azure.
+          create_host_path: false
     depends_on:
       - vectordb
 
