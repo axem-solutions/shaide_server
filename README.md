@@ -143,6 +143,10 @@ To run all services with compose, you can:
 docker compose up
 ```
 
+Compose builds the server from the `dev` Docker target, which adds `azure-cli`
+for local Azure authentication. Release images are built from the default
+`runtime` target and do not include it.
+
 For development, you can start the supporting services with:
 
 ```sh
