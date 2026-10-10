@@ -11,9 +11,12 @@ use kube::{
 use serde::{Deserialize, Serialize};
 use shaide_common::api::mcp::{McpServerResponse, McpServerStatusResponse};
 use tokio::sync::OnceCell;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
-use crate::{config::get_environment_config, error::ShaideError};
+use crate::{
+    config::{StaticMcpServer, get_environment_config},
+    error::ShaideError,
+};
 
 #[derive(Clone, Debug)]
 pub struct ResolvedMcpTarget(pub String);
@@ -204,6 +207,25 @@ impl McpService {
         Ok(mcp_service)
     }
 
+    /// Serves a fixed server list. No Kubernetes client or watch is created,
+    /// and every server reports `Running` since nothing observes its state.
+    fn from_static(servers: &[StaticMcpServer]) -> Self {
+        let mcp_service = McpService::default();
+        for server in servers {
+            mcp_service.servers.insert(
+                server.name.clone(),
+                McpServer {
+                    name: server.name.clone(),
+                    status: McpStatus::Running,
+                    url: server.url.clone(),
+                },
+            );
+        }
+        let names: Vec<_> = servers.iter().map(|server| server.name.as_str()).collect();
+        info!(?names, "Using static MCP servers from MCP_SERVERS");
+        mcp_service
+    }
+
     pub fn get_service_url(&self, server_name: &str) -> Option<String> {
         let server = self.servers.iter().fold(None, |acc, val| {
             if val.name != server_name {
@@ -257,7 +279,12 @@ static MCP_SERVICE: OnceCell<McpService> = OnceCell::const_new();
 pub async fn get_mcp_service() -> Result<&'static McpService, ShaideError> {
     let config = get_environment_config();
     let service = MCP_SERVICE
-        .get_or_try_init(|| McpService::new(&config.mcp_namespace, &config.mcp_label_selector))
+        .get_or_try_init(|| async {
+            match &config.mcp_servers {
+                Some(servers) => Ok(McpService::from_static(servers)),
+                None => McpService::new(&config.mcp_namespace, &config.mcp_label_selector).await,
+            }
+        })
         .await
         .unwrap();
     Ok(service)
