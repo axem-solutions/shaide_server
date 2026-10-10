@@ -19,6 +19,7 @@ impl ExecuteServerCommand for ListEmbeddingModelsArg {
             id,
             name,
             daily_input_token_limit,
+            ..
         } in models_response.models
         {
             let limit = daily_input_token_limit
