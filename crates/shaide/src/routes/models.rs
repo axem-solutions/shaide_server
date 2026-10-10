@@ -26,7 +26,7 @@ use hyper::StatusCode;
 
 use crate::{
     error::ShaideError,
-    middlewares::{Admin, Authenticated},
+    middlewares::{Admin, Principal},
 };
 
 #[derive(Debug, Deserialize)]
@@ -44,7 +44,7 @@ pub struct ListModelsQuery {
     security(("bearer_token" = []))
 )]
 pub async fn list_models(
-    _authenticated: Authenticated,
+    _principal: Principal,
     State(db): State<DbConn>,
     Query(query): Query<ListModelsQuery>,
 ) -> Result<Response, ShaideError> {
@@ -150,7 +150,7 @@ pub async fn set_model_limits(
     security(("bearer_token" = []))
 )]
 pub async fn list_embedding_models(
-    _authenticated: Authenticated,
+    _principal: Principal,
     State(db): State<DbConn>,
 ) -> Result<Json<ListEmbeddingModelsResponse>, ShaideError> {
     let models = db.list_embedding_models().await?;

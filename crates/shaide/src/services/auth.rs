@@ -124,3 +124,10 @@ static AUTH_SERVICE: OnceLock<AuthService> = OnceLock::new();
 pub fn get_auth_service() -> &'static AuthService {
     AUTH_SERVICE.get_or_init(|| AuthService::new(&get_environment_config().jwt_secret))
 }
+
+/// Initializes the shared auth service with a fixed secret, so tests sign and
+/// validate tokens without the environment configuration.
+#[cfg(test)]
+pub(crate) fn init_test_auth_service() -> &'static AuthService {
+    AUTH_SERVICE.get_or_init(|| AuthService::new("test-only-jwt-secret-of-at-least-32-bytes"))
+}

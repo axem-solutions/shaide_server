@@ -55,6 +55,19 @@ curl -X POST http://localhost:8080/v1/login \
 Send the returned `access_token` to authenticated endpoints as
 `Authorization: Bearer <access_token>`.
 
+Every authenticated request reloads the account from the database. Role changes,
+regular-user account expiry and account deletion therefore apply to existing
+tokens. Admin routes accept only admins; regular-user routes accept only active
+regular users. Both roles can list models using `/v1/models` and
+`/v1/embedding_models`, with the existing response formats.
+
+Handlers that need the authenticated identity can use the `Principal` extractor.
+It exposes the current database user, role and usage `request_id` after one
+authorization. Use one auth extractor per handler: `Principal` accepts either
+role, while `Admin` and `AuthUser` enforce their existing role restrictions.
+Successful authorization creates one API usage row, including when a later
+handler rejects the request; failed authentication or role checks create none.
+
 # Migrations
 
 To create a new migration, you may do the following:
