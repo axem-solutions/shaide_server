@@ -5,6 +5,9 @@ use utoipa::ToSchema;
 pub struct ListEmbeddingModel {
     pub id: i64,
     pub name: String,
+    /// Provider hosting the model, when configured.
+    #[serde(default)]
+    pub platform: Option<String>,
     /// Daily input tokens each user may embed with this model; `null` is unlimited.
     #[serde(default)]
     pub daily_input_token_limit: Option<i64>,

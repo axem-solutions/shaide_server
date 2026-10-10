@@ -159,6 +159,7 @@ pub async fn list_embedding_models(
         .map(|m| ListEmbeddingModel {
             id: m.id,
             name: m.name,
+            platform: m.platform,
             daily_input_token_limit: m.daily_input_token_limit,
         })
         .collect::<Vec<_>>();
@@ -291,11 +292,11 @@ mod tests {
     use axum::{Json, body::to_bytes, extract::State, response::IntoResponse};
     use hyper::StatusCode;
     use shaide_common::api::{error::OpenAiErrorResponse, models::CreateModelRequest};
-    use shaide_db::DbConn;
+    use shaide_db::{DbConn, embedding_models::InsertEmbeddingModelDao};
     use temp_testdir::TempDir;
 
-    use super::create_models;
-    use crate::middlewares::Admin;
+    use super::{create_models, list_embedding_models};
+    use crate::middlewares::{Admin, Authenticated};
 
     fn create_model_request(name: &str, reasoning_effort_values: &[&str]) -> CreateModelRequest {
         CreateModelRequest {
@@ -328,6 +329,46 @@ mod tests {
         DbConn::new(&temp_dir.join("shaide-test.sqlite"))
             .await
             .expect("test database should be created")
+    }
+
+    #[tokio::test]
+    async fn embedding_model_list_preserves_configured_platform() {
+        let temp_dir = TempDir::default();
+        let db = test_db(&temp_dir).await;
+        for (name, platform) in [
+            ("text-embedding-3-large", Some("foundry")),
+            ("local-embedding", None),
+        ] {
+            db.insert_embedding_model(InsertEmbeddingModelDao {
+                name: name.to_owned(),
+                url: "https://example.com/v1/embeddings".to_owned(),
+                vector_size: 3072,
+                platform: platform.map(str::to_owned),
+                api_schema: Some("open_ai".to_owned()),
+                daily_input_token_limit: None,
+            })
+            .await
+            .unwrap();
+        }
+
+        let response = list_embedding_models(Authenticated::Admin, State(db))
+            .await
+            .unwrap()
+            .into_response();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let models = body["models"].as_array().unwrap();
+        let foundry = models
+            .iter()
+            .find(|m| m["name"] == "text-embedding-3-large")
+            .unwrap();
+        assert_eq!(foundry["platform"], "foundry");
+        let local = models
+            .iter()
+            .find(|m| m["name"] == "local-embedding")
+            .unwrap();
+        assert!(local["platform"].is_null());
     }
 
     async fn bad_request_message(request: CreateModelRequest, db: DbConn) -> String {
