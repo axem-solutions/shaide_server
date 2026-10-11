@@ -68,7 +68,7 @@ class Handler(BaseHTTPRequestHandler):
         name = "demo-embed" if embedding else "demo-chat"
         if url.path == "/v1/models":
             return self.reply(200, {"object": "list", "data": [{"id": name, "parent": None}]})
-        if url.path == "/server_info" and parse_qs(url.query).get("config_format") == ["json"]:
+        if url.path == "/v1/shaide/metadata":
             if scenario == "missing-metadata" and not embedding:
                 return self.reply(404, {"error": "Runtime metadata unavailable"})
             config = {"model": f"/weights/{name}", "served_model_name": [name], "max_model_len": 32768}
@@ -78,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 config.update(override_generation_config={"max_new_tokens": 4096},
                               multimodal_config={"limit_per_prompt": {"image": 4}})
-            return self.reply(200, {"vllm_config": {"model_config": config}})
+            return self.reply(200, {"schema_version": 1, "vllm_config": {"model_config": config}})
         return self.reply(404, {"error": "Unknown metadata endpoint"})
 
     def do_POST(self):

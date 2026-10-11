@@ -229,7 +229,7 @@ when no port is declared). Embedders use their labeled ClusterIP Service and
 its declared HTTP port. The server does not reconstruct deployment names, read
 Pulumi files, use an ambient local kubeconfig, or consume `vllm-config.json`.
 
-Each target is queried with **GET only** at `/server_info?config_format=json`
+Each target is queried with **GET only** at `/v1/shaide/metadata`
 and `/v1/models`. The latter supplies public served names rather than local
 weight paths, including aliases but excluding LoRA adapters. No inference probe
 is made, including for embedding dimensions. Requests have three-second timeouts,
@@ -248,13 +248,18 @@ errors while preserving custom-model registration.
 
 ### Runtime metadata requirements
 
-The endpoint is spelled **`/server_info`**, not `/server-info`. Upstream vLLM
-versions, including v0.11.0 and the current upstream router, gate it behind
-`VLLM_SERVER_DEV_MODE`. shaide does **not** enable development mode, which also
-exposes other development endpoints. Deployments must provide a suitably
-restricted runtime metadata endpoint before those models can be discovered;
-otherwise the catalog reports an error. This change does not deploy or
-reconfigure vLLM.
+The platform exposes **`GET /v1/shaide/metadata`** using a small module loaded
+through vLLM's supported `--middleware` option. Enable
+`shaide.runtimeMetadata.enabled: true` in the model's values file. The platform
+mounts the embedded module from a read-only ConfigMap and explicitly disables
+`VLLM_SERVER_DEV_MODE`. No sidecar, inference request, or full configuration dump
+is needed. The route remains behind vLLM's existing authentication middleware.
+Deployments protected by a vLLM API key currently report unavailable metadata:
+discovery does not forward administrator credentials to model services.
+
+The response must declare `schema_version: 1`. Other versions, unavailable
+metadata, or malformed responses exclude the affected model with an error.
+There is no fallback to the development-only `/server_info` endpoint.
 
 The response must contain a structured `vllm_config.model_config`:
 
