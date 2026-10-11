@@ -16,7 +16,7 @@ fn service(name: &str, category: &str, service_type: &str, port: Option<u16>) ->
 }
 
 fn info(name: &str) -> Value {
-    json!({"vllm_config": {"model_config": {
+    json!({"schema_version": 1, "vllm_config": {"model_config": {
         "model": "/weights/local-path", "served_model_name": [name], "max_model_len": 8192,
         "override_generation_config": {"max_new_tokens": 2048},
         "multimodal_config": {"limit_per_prompt": {"image": 4}},
@@ -176,13 +176,13 @@ async fn discovery_keeps_healthy_services_and_never_posts_or_forwards_auth() {
         query: axum::extract::Query<BTreeMap<String, String>>,
     ) -> Json<Value> {
         assert!(!headers.contains_key("authorization"));
-        assert_eq!(query.get("config_format").map(String::as_str), Some("json"));
+        assert!(query.is_empty());
         Json(info("served"))
     }
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     let app = Router::new()
-        .route("/server_info", get(metadata_handler))
+        .route("/v1/shaide/metadata", get(metadata_handler))
         .route(
             "/v1/models",
             get(|| async { Json(json!({"data":[{"id":"served"}]})) }),
@@ -220,7 +220,7 @@ async fn malformed_http_response_does_not_become_a_model() {
     let task = tokio::spawn(async move {
         axum::serve(
             listener,
-            Router::new().route("/server_info", get(|| async { "not-json" })),
+            Router::new().route("/v1/shaide/metadata", get(|| async { "not-json" })),
         )
         .await
         .unwrap()
@@ -278,7 +278,7 @@ async fn kubernetes_catalog_uses_the_merged_label_contract_and_never_probes_embe
             ),
         )
         .route(
-            "/server_info",
+            "/v1/shaide/metadata",
             get(|| async {
                 let mut data = info("embedding-name");
                 data["vllm_config"]["model_config"]["pooler_config"] = Value::Null;
@@ -309,4 +309,17 @@ async fn kubernetes_catalog_uses_the_merged_label_contract_and_never_probes_embe
     assert_eq!(result.warnings.len(), 1);
     assert!(result.warnings[0].message.contains("No inference probe"));
     assert_eq!(unexpected.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn metadata_schema_version_is_required_and_checked() {
+    let target = target(&service("model", "generative", "ExternalName", None))
+        .unwrap()
+        .unwrap();
+    for version in [Value::Null, json!(2), json!("1")] {
+        let mut data = info("model");
+        data["schema_version"] = version;
+        let error = metadata::normalize(&target, Some(&data), None).unwrap_err();
+        assert!(error.contains("schema_version"));
+    }
 }

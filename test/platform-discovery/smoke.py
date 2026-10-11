@@ -112,7 +112,7 @@ def main():
         print("PASS: " + name, flush=True)
     logs = subprocess.check_output(COMPOSE + ["logs", "--no-color", "platform-mock"], text=True)
     assert "POST " not in logs, "Unexpected inference or other POST to platform mock"
-    assert "/server_info?config_format=json" in logs and "/v1/models" in logs
+    assert "/v1/shaide/metadata" in logs and "/v1/models" in logs
     print("PASS: metadata GETs only; no inference probes", flush=True)
 
 

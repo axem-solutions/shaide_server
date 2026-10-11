@@ -42,8 +42,12 @@ pub(super) fn normalize(
     info: Option<&Value>,
     models: Option<&Value>,
 ) -> DiscoveryResult {
-    let config = object(info.and_then(|info| info.get("vllm_config")))
-        .ok_or("Runtime metadata is unavailable. vLLM must expose GET /server_info?config_format=json; discovery does not enable development mode or run inference probes.")?;
+    let info = info.ok_or("Runtime metadata is unavailable. Enable shaide.runtimeMetadata in the model deployment to expose GET /v1/shaide/metadata. No inference probes are run.")?;
+    if info.get("schema_version").and_then(Value::as_u64) != Some(1) {
+        return Err("Runtime metadata has an unsupported or missing schema_version (expected 1).");
+    }
+    let config = object(info.get("vllm_config"))
+        .ok_or("Runtime metadata did not return a structured vllm_config.")?;
     let model = object(config.get("model_config"))
         .ok_or("vLLM did not return a structured model_config.")?;
     let mut served_names: BTreeSet<String> = model
@@ -53,7 +57,7 @@ pub(super) fn normalize(
         .into_iter()
         .collect();
     // /v1/models is the authoritative served-name list, including aliases. Ignore LoRA adapters
-    // because they can have different capabilities than the base model described by server_info.
+    // because they can have different capabilities than the base model described by runtime metadata.
     if let Some(cards) = models
         .and_then(|value| value.get("data"))
         .and_then(Value::as_array)

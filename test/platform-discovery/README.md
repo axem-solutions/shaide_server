@@ -8,7 +8,7 @@ switch or Kubernetes cluster is required.
 
 The fixtures are **discovery-only**: they cannot generate text or embeddings.
 The mock rejects inference requests. Discovery only requests `/api/v1/services`,
-`/server_info?config_format=json`, and `/v1/models`; it never probes inference.
+`/v1/shaide/metadata`, and `/v1/models`; it never probes inference.
 Missing metadata is exposed as an error and the affected model is excluded.
 
 ## Start

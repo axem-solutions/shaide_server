@@ -171,10 +171,7 @@ async fn get_json(http: &reqwest::Client, url: String) -> Result<Value, &'static
 
 async fn discover_target(http: &reqwest::Client, target: &Target) -> DiscoveryResult {
     let (info, models) = tokio::join!(
-        get_json(
-            http,
-            format!("{}/server_info?config_format=json", target.base)
-        ),
+        get_json(http, format!("{}/v1/shaide/metadata", target.base)),
         get_json(http, format!("{}/v1/models", target.base)),
     );
     let info = info.ok();
