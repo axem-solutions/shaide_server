@@ -8,3 +8,5 @@ pub mod statistics;
 pub mod trial;
 pub mod user_daily_limits;
 pub mod users;
+
+pub mod platform_models;

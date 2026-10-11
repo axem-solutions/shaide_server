@@ -72,6 +72,9 @@ pub async fn api_router(health_state: Arc<HealthState>, db: DbConn) -> Router {
         .merge(crate::routes::responses::responses_router(db.clone()))
         .merge(crate::routes::users::users_router(db.clone()))
         .merge(crate::routes::models::model_router(db.clone()))
+        .merge(crate::routes::platform_models::platform_models_router(
+            db.clone(),
+        ))
         .merge(crate::routes::embedding::embedding_router(db.clone()))
         .merge(crate::routes::vector_db::vector_db_router(db.clone()))
         .merge(crate::routes::statistics::statistics_router(db.clone()))

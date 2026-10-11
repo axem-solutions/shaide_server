@@ -208,3 +208,76 @@ Available recipes:
 
 `db-shell` defaults to the server database under `~/.config/axem/shaide`, and
 `docker-build` defaults to the image tag `shaide-server:local`.
+
+## AI Platform model discovery
+
+`GET /v1/platform-models` is an **admin-only** catalog of models deployed on the
+AI Platform. It is separate from `/v1/models` and `/v1/embedding_models`, which
+continue to list database registrations. Discovery does not add database rows:
+removing a registration still disables user inference until an administrator
+explicitly adds it again.
+
+The server lists Kubernetes Services with these labels using its in-cluster
+ServiceAccount and the `shaide-server-topology-reader` RBAC from shaide PR #8:
+
+- `app.kubernetes.io/part-of=app-serving`
+- `axem.dev/model-slug`
+- `axem.dev/model-category=generative` or `embedder`
+
+Generative models use the labeled ExternalName gateway Service (HTTP port 80
+when no port is declared). Embedders use their labeled ClusterIP Service and
+its declared HTTP port. The server does not reconstruct deployment names, read
+Pulumi files, use an ambient local kubeconfig, or consume `vllm-config.json`.
+
+Each target is queried with **GET only** at `/server_info?config_format=json`
+and `/v1/models`. The latter supplies public served names rather than local
+weight paths, including aliases but excluding LoRA adapters. No inference probe
+is made, including for embedding dimensions. Requests have three-second timeouts,
+eight-way concurrency, a 20-second metadata deadline, a 2 MiB response limit,
+and no redirect following or credential forwarding. Results (including errors)
+are cached for 30 seconds, and concurrent refreshes share the same work.
+
+The response contains `models` and `warnings`. Each model has a `kind` of
+`generative` or `embedding` plus the fields accepted by the corresponding
+registration endpoint; `api_schema` is `open_ai` and `platform` is `axem`.
+A warning contains `source` (namespace/Service or a conflicting served name)
+and `message`. Unavailable or malformed metadata excludes only the affected
+Service. Duplicate names within a model kind exclude all conflicting entries.
+Failure to access Kubernetes returns HTTP 503. The Control Panel renders these
+errors while preserving custom-model registration.
+
+### Runtime metadata requirements
+
+The endpoint is spelled **`/server_info`**, not `/server-info`. Upstream vLLM
+versions, including v0.11.0 and the current upstream router, gate it behind
+`VLLM_SERVER_DEV_MODE`. shaide does **not** enable development mode, which also
+exposes other development endpoints. Deployments must provide a suitably
+restricted runtime metadata endpoint before those models can be discovered;
+otherwise the catalog reports an error. This change does not deploy or
+reconfigure vLLM.
+
+The response must contain a structured `vllm_config.model_config`:
+
+- Served names come from `/v1/models`, then `served_model_name`, then `model`.
+- Generative `max_model_len` supplies context size. An explicit
+  `override_generation_config.max_new_tokens` caps output; otherwise shaide's
+  output upper bound is the context size. Input still consumes that window,
+  and upstream generation policies can impose a lower limit.
+- Image support and count are derived from runtime image configuration.
+  Unsupported/unreported reasoning effort, Responses, FIM and image byte/pixel
+  limits are not inferred from model names.
+- Embedding output dimensions must be explicit in
+  `model_config.pooler_config.dimensions`. `hidden_size` is not a reliable
+  substitute because projection/pooling can change output dimensions. If absent,
+  expose the output dimensions in runtime metadata before retrying, or register
+  known settings through the existing server model API. Discovery never runs an
+  embedding request to measure dimensions.
+
+A local Compose deployment without Kubernetes returns a discovery-unavailable
+error. Installed models, third-party models and add/remove operations continue
+working through the existing APIs.
+
+For local end-to-end testing without a cluster, see the isolated
+[platform discovery Compose demo](test/platform-discovery/README.md). It mocks
+the Kubernetes API and vLLM metadata while exercising the real server and
+Control Panel, including missing-metadata errors, without inference probes.
