@@ -15,6 +15,7 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::routes::users::create_user,
         crate::routes::users::generate_users,
         crate::routes::models::list_models,
+        crate::routes::platform_models::list_platform_models,
         crate::routes::models::create_models,
         crate::routes::models::delete_model,
         crate::routes::models::set_model_limits,

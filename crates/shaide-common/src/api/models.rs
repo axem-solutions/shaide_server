@@ -114,7 +114,7 @@ pub struct CreateModelResponse {
     pub model_id: i64,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Clone, Debug)]
 pub struct CreateModelRequest {
     pub name: String,
     pub variant: String,

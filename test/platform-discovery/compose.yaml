@@ -1,0 +1,66 @@
+name: shaide-discovery-demo
+
+services:
+  platform-mock:
+    init: true
+    build: .
+    image: shaide-platform-mock:discovery-demo
+    volumes:
+      - serviceaccount:/serviceaccount
+      - ./fixtures:/fixtures:ro
+    networks:
+      default:
+        aliases:
+          - mock-chat.discovery-demo.svc.cluster.local
+          - mock-embed.discovery-demo.svc.cluster.local
+          - mock-chat-copy.discovery-demo.svc.cluster.local
+    healthcheck:
+      test: [CMD, python3, /app/mock.py, healthcheck]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  shaide_server:
+    init: true
+    build:
+      context: ../..
+      target: runtime
+    image: shaide-server:discovery-demo
+    ports: ["127.0.0.1:18080:8080"]
+    environment:
+      ADMIN_PASSWORD: admin
+      JWT_SECRET: discovery-demo-only-jwt-secret-change-me
+      shaide_ROOT: /data
+      SHAIDE_SERVER_UI_FQDN: control-panel
+      SHAIDE_SERVER_UI_PORT: "3000"
+      VECTOR_DB_URL: http://vectordb:6334
+      KUBERNETES_SERVICE_HOST: platform-mock
+      KUBERNETES_SERVICE_PORT: "8443"
+    volumes:
+      - server-data:/data
+      - serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount:ro
+    depends_on:
+      platform-mock:
+        condition: service_healthy
+      vectordb:
+        condition: service_started
+
+  control-panel:
+    build:
+      context: ${CONTROL_PANEL_SOURCE:-../../../control-panel-platform-discovery}
+    image: shaide-control-panel:discovery-demo
+    ports: ["127.0.0.1:13000:3000"]
+    environment:
+      SHAIDE_SERVER_FQDN: shaide_server
+      SHAIDE_SERVER_PORT: "8080"
+      SESSION_SECRET: discovery-demo-only-session-secret-change-me
+    depends_on: [shaide_server]
+
+  vectordb:
+    image: qdrant/qdrant:latest
+    volumes: ["vector-data:/qdrant/storage"]
+
+volumes:
+  serviceaccount:
+  server-data:
+  vector-data:

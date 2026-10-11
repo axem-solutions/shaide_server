@@ -9,6 +9,7 @@ pub mod health;
 pub mod mcp;
 pub mod metrics;
 pub mod models;
+pub mod platform_models;
 pub mod responses;
 pub mod statistics;
 pub mod trial;
