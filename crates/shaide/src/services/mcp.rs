@@ -209,7 +209,7 @@ impl McpService {
 
     /// Serves a fixed server list. No Kubernetes client or watch is created,
     /// and every server reports `Running` since nothing observes its state.
-    fn from_static(servers: &[StaticMcpServer]) -> Self {
+    pub(crate) fn from_static(servers: &[StaticMcpServer]) -> Self {
         let mcp_service = McpService::default();
         for server in servers {
             mcp_service.servers.insert(

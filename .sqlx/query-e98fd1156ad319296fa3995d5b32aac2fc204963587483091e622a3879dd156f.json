@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO organizations (organization_name, description, can_users_upload, embedding_model_id)\n             VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "e98fd1156ad319296fa3995d5b32aac2fc204963587483091e622a3879dd156f"
+}

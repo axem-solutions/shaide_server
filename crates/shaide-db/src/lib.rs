@@ -1,9 +1,12 @@
 pub mod api_usage;
+pub mod collection_context;
 pub mod daily_usage;
 pub mod embedding_models;
 mod embedding_usage;
 pub mod error;
+pub mod files;
 pub mod models;
+pub mod organizations;
 mod users;
 
 use std::path::Path;

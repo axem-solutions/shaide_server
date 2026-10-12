@@ -4093,6 +4093,7 @@ dependencies = [
  "argon2",
  "async-openai",
  "async-stream",
+ "aws-lc-rs",
  "axum",
  "axum-prometheus",
  "axum-reverse-proxy",

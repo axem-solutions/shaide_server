@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE organizations SET\n                organization_name = COALESCE(?, organization_name),\n                description = COALESCE(?, description),\n                can_users_upload = COALESCE(?, can_users_upload),\n                embedding_model_id = COALESCE(?, embedding_model_id),\n                updated_at = DATETIME('now')\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "d709ee86c1024989eeebe75ff78ee89dfd0f2d33919520b4ca0fc5d2bf83645a"
+}

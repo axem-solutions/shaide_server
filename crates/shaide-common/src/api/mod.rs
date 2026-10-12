@@ -9,4 +9,5 @@ pub mod trial;
 pub mod user_daily_limits;
 pub mod users;
 
+pub mod organizations;
 pub mod platform_models;
