@@ -60,7 +60,7 @@ pub(crate) fn get_bearer_value_or_error(parts: &Parts) -> Result<String, ShaideE
     } else {
         error!(
             method = %parts.method,
-            uri = %parts.uri,
+            path = parts.uri.path(),
             "Request rejected with no bearer token"
         );
         Err(ShaideError::unauthorized(
@@ -122,7 +122,7 @@ pub(crate) async fn authorize_request(
         user_id = user.id,
         role = ?user.role,
         method = %parts.method,
-        uri = %parts.uri,
+        path = parts.uri.path(),
         "Authenticated request"
     );
     Ok(AuthorizedRequest { user, request_id })

@@ -6,3 +6,5 @@ pub mod health;
 pub mod mcp;
 pub mod platform_models;
 pub mod responses;
+
+pub mod collection_context;

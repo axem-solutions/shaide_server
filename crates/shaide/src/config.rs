@@ -132,6 +132,7 @@ pub struct RunTimeConfig {
     pub mcp_namespace: String,
     pub mcp_label_selector: String,
     pub mcp_servers: Option<Vec<StaticMcpServer>>,
+    pub mcp_collection_context_targets: crate::services::collection_context::ContextTargets,
     pub is_trial: bool,
     pub webapp_url: Option<String>,
 }
@@ -167,6 +168,19 @@ impl RunTimeConfig {
             let mcp_namespace = env_map.var("MCP_NAMESPACE").unwrap_or_default();
             let mcp_label_selector = env_map.var("MCP_LABEL_SELECTOR").unwrap_or_default();
             let mcp_servers = mcp_servers_from_env(env_map.var("MCP_SERVERS").ok());
+            let mcp_collection_context_targets =
+                crate::services::collection_context::ContextTargets::parse(
+                    env_map
+                        .var("MCP_COLLECTION_CONTEXT_TARGETS")
+                        .ok()
+                        .as_deref(),
+                    env_map
+                        .var("MCP_COLLECTION_CONTEXT_ALLOW_LOCAL_HTTP")
+                        .ok()
+                        .as_deref(),
+                    &jwt_secret,
+                )
+                .unwrap_or_else(|error| panic!("MCP collection context configuration: {error}"));
             let is_trial = env_map
                 .var("TRIAL")
                 .map(|s| s.eq_ignore_ascii_case("true"))
@@ -183,6 +197,7 @@ impl RunTimeConfig {
                 mcp_namespace,
                 mcp_label_selector,
                 mcp_servers,
+                mcp_collection_context_targets,
                 is_trial,
                 webapp_url,
             }
@@ -206,6 +221,17 @@ impl RunTimeConfig {
             let mcp_namespace = std::env::var("MCP_NAMESPACE").unwrap_or_default();
             let mcp_label_selector = std::env::var("MCP_LABEL_SELECTOR").unwrap_or_default();
             let mcp_servers = mcp_servers_from_env(std::env::var("MCP_SERVERS").ok());
+            let mcp_collection_context_targets =
+                crate::services::collection_context::ContextTargets::parse(
+                    std::env::var("MCP_COLLECTION_CONTEXT_TARGETS")
+                        .ok()
+                        .as_deref(),
+                    std::env::var("MCP_COLLECTION_CONTEXT_ALLOW_LOCAL_HTTP")
+                        .ok()
+                        .as_deref(),
+                    &jwt_secret,
+                )
+                .unwrap_or_else(|error| panic!("MCP collection context configuration: {error}"));
             let is_trial = std::env::var("TRIAL")
                 .map(|s| s.eq_ignore_ascii_case("true"))
                 .unwrap_or_default();
@@ -221,6 +247,7 @@ impl RunTimeConfig {
                 mcp_namespace,
                 mcp_label_selector,
                 mcp_servers,
+                mcp_collection_context_targets,
                 is_trial,
                 webapp_url,
             }

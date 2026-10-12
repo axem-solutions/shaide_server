@@ -107,6 +107,11 @@ users, as it does for Kubernetes discovery. Statically configured servers
 always report `Running`, because the server does not check whether they are
 up.
 
+See [gateway collection context](documentation/collection-context-v1.md) for explicit
+KC target participation, dedicated signing and service credentials, fresh collection
+access, targeted admin discovery and supported limits. Ordinary MCP behavior above
+remains the default.
+
 # Authentication
 
 Users and admins exchange their username and password for a one-hour JWT:
