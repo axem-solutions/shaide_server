@@ -292,11 +292,11 @@ mod tests {
     use axum::{Json, body::to_bytes, extract::State, response::IntoResponse};
     use hyper::StatusCode;
     use shaide_common::api::{error::OpenAiErrorResponse, models::CreateModelRequest};
-    use shaide_db::{DbConn, embedding_models::InsertEmbeddingModelDao};
+    use shaide_db::{DbConn, UserDAO, UserRole, embedding_models::InsertEmbeddingModelDao};
     use temp_testdir::TempDir;
 
     use super::{create_models, list_embedding_models};
-    use crate::middlewares::{Admin, Authenticated};
+    use crate::middlewares::{Admin, Principal};
 
     fn create_model_request(name: &str, reasoning_effort_values: &[&str]) -> CreateModelRequest {
         CreateModelRequest {
@@ -351,7 +351,18 @@ mod tests {
             .unwrap();
         }
 
-        let response = list_embedding_models(Authenticated::Admin, State(db))
+        let principal = Principal {
+            user: UserDAO {
+                id: 1070,
+                username: "synthetic-admin".to_owned(),
+                password_hash: "synthetic-hash".to_owned(),
+                role: UserRole::Admin,
+                expiry: chrono::Utc::now(),
+            },
+            role: UserRole::Admin,
+            request_id: 4242,
+        };
+        let response = list_embedding_models(principal, State(db))
             .await
             .unwrap()
             .into_response();
