@@ -1,0 +1,134 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO files (hash, organization_id, file_name, mime_type)\n            VALUES (?, ?, ?, ?)\n            ON CONFLICT (hash) DO NOTHING\n            RETURNING\n                hash,\n                organization_id,\n                file_name,\n                mime_type,\n                size as \"size?\",\n                pages as \"pages?\",\n                status as \"status: FileStatus\",\n                error_code as \"error_code?\",\n                uploaded_at as \"uploaded_at: DateTime<Utc>\",\n                updated_at as \"updated_at: DateTime<Utc>\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "hash",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "hash"
+          }
+        }
+      },
+      {
+        "name": "organization_id",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "organization_id"
+          }
+        }
+      },
+      {
+        "name": "file_name",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "file_name"
+          }
+        }
+      },
+      {
+        "name": "mime_type",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "mime_type"
+          }
+        }
+      },
+      {
+        "name": "size?",
+        "ordinal": 4,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "size"
+          }
+        }
+      },
+      {
+        "name": "pages?",
+        "ordinal": 5,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "pages"
+          }
+        }
+      },
+      {
+        "name": "status: FileStatus",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "name": "error_code?",
+        "ordinal": 7,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "error_code"
+          }
+        }
+      },
+      {
+        "name": "uploaded_at: DateTime<Utc>",
+        "ordinal": 8,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "uploaded_at"
+          }
+        }
+      },
+      {
+        "name": "updated_at: DateTime<Utc>",
+        "ordinal": 9,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "ea2f82fa2758750ce41caa482bc0e58bc4eaa6fe4a846d2a252cf2604d9f4c5b"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO organization_memberships (user_id, organization_id) VALUES (?, ?)\n             ON CONFLICT (user_id, organization_id) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "b2d0a294654137cd275ae29bfd6e5d0b48ce5dd3a0a5f9553836fd9fccd07521"
+}

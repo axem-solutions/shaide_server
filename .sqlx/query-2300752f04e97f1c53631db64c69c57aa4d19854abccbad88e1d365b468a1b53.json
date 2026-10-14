@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT status as \"status: FileStatus\" FROM files WHERE organization_id = ? AND hash = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "status: FileStatus",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2300752f04e97f1c53631db64c69c57aa4d19854abccbad88e1d365b468a1b53"
+}

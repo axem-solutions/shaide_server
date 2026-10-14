@@ -189,6 +189,18 @@ impl ShaideError {
                 None,
                 "resource_not_found",
             ),
+            Self::DB(ShaideDBError::MissingReference(value)) => ClassifiedError::new(
+                StatusCode::BAD_REQUEST,
+                format!("The referenced {value} does not exist"),
+                None,
+                "missing_reference",
+            ),
+            Self::DB(ShaideDBError::FileStatusConflict { current }) => ClassifiedError::new(
+                StatusCode::CONFLICT,
+                format!("The file is {current}"),
+                None,
+                "file_status_conflict",
+            ),
             Self::UnsupportedPlatform(platform) => ClassifiedError::new(
                 StatusCode::BAD_REQUEST,
                 format!("Requested platform '{platform}' is not supported"),
