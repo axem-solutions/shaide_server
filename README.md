@@ -18,6 +18,9 @@ The following table describes the current environment variables that we use.
 | PORT                  | Yes       | Server bind port (default: `8080`)                               |
 | VECTOR_DB_URL         | Yes       | Vector DB URL (default: `http://localhost:6334`)                 |
 | DATABASE_URL          | Yes       | Database URL used by SQLx tooling/migrations                     |
+| MCP_SERVERS           | Yes       | Static MCP server list as JSON (unset: Kubernetes discovery), see [MCP servers](#mcp-servers) |
+| MCP_NAMESPACE         | Yes       | Namespace watched for MCP pods by Kubernetes discovery           |
+| MCP_LABEL_SELECTOR    | Yes       | Label selector of MCP pods for Kubernetes discovery              |
 
 Example `.env` file.
 
@@ -41,6 +44,68 @@ WebApp container and set it for you (`http://localhost:3001` natively,
 `http://webapp:8787` in compose); export `WEBAPP_URL` to point `just dev` at a
 WebApp you run yourself. Include any upstream base path in the URL:
 `/app/assets/main.js` is forwarded to `<WEBAPP_URL>/assets/main.js`.
+
+# MCP servers
+
+Authenticated users list the MCP servers with `GET /v1/list-mcps` and reach
+them through the reverse proxy at `/v1/mcp/proxy/{server_id}/{path}`, where
+`server_id` is the `name` of a listed server. The server finds MCP servers in
+one of two ways:
+
+- **Kubernetes discovery**, the default when `MCP_SERVERS` is unset or blank:
+  the server watches the pods in `MCP_NAMESPACE` that match
+  `MCP_LABEL_SELECTOR`, and reads each pod's name and URL from its
+  `mcp.shaide/datasource` and `mcp.shaide/url` annotations. This needs access
+  to the Kubernetes API.
+- **Static configuration**, when `MCP_SERVERS` is set: the server uses the
+  given list and never creates a Kubernetes client, so it works with Docker
+  Compose or a native server. `MCP_NAMESPACE` and `MCP_LABEL_SELECTOR` are
+  then ignored. Set `MCP_SERVERS='[]'` to run without MCP servers and without
+  Kubernetes.
+
+`MCP_SERVERS` is a JSON array with one object per server:
+
+| Field  | Required | Description |
+| ------ | -------- | ----------- |
+| `name` | Yes      | Server id: 1-63 lowercase letters, digits or `-`, starting and ending with a letter or digit. Must be unique. |
+| `url`  | Yes      | Absolute `http` or `https` base URL that the shaide server can reach. It must not contain credentials, a query or a fragment. |
+
+No other fields are accepted. The server refuses to start if `MCP_SERVERS` is
+invalid, and the error names the offending entry without quoting its URL.
+
+For example, an MCP server running as the `kc-mcp` Compose service:
+
+```env
+MCP_SERVERS='[{"name":"knowledge-center","url":"http://kc-mcp:8000"}]'
+```
+
+or in `compose.yaml`:
+
+```yaml
+environment:
+  MCP_SERVERS: '[{"name": "knowledge-center", "url": "http://kc-mcp:8000"}]'
+```
+
+Hosts such as `localhost` or `host.docker.internal` are allowed for local
+development. The proxy appends the request path and query to the base URL,
+keeping any base path and ignoring a trailing slash: with
+`"url": "http://kc-mcp:8000/base/"`,
+`/v1/mcp/proxy/knowledge-center/mcp?x=1` is forwarded to
+`http://kc-mcp:8000/base/mcp?x=1`. Callers choose only the server id, never
+the target URL; unknown ids return `404`. The base path is not an access
+boundary, since a request path can contain `..`, so give each MCP server its
+own host or port.
+
+Both discovery modes authenticate requests the same way. Every request needs
+a valid user bearer token, and that token is never forwarded to the MCP
+server. To send credentials to the MCP server, put them in the
+`x-mcp-authorization` header; the proxy forwards its value as
+`Authorization`. Keep downstream credentials out of `MCP_SERVERS`.
+
+`/v1/list-mcps` returns the normalized `url` of each server to authenticated
+users, as it does for Kubernetes discovery. Statically configured servers
+always report `Running`, because the server does not check whether they are
+up.
 
 # Authentication
 
