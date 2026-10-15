@@ -14,6 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Test kc Compose helpers
+        env:
+          TMPDIR: ${{ runner.temp }}
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -W error::ResourceWarning -B -m unittest discover -s test/kc-compose -v
+
       # Installs the version and components pinned in rust-toolchain.toml.
       - name: Install Rust toolchain
         run: |
