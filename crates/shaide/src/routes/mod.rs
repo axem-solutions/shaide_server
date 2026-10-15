@@ -6,6 +6,7 @@ pub mod chat;
 pub mod completions;
 pub mod embedding;
 pub mod health;
+pub mod knowledge_center;
 pub mod mcp;
 pub mod metrics;
 pub mod models;
@@ -17,5 +18,8 @@ pub mod users;
 pub mod vector_db;
 
 pub async fn fallback_404(uri: Uri) -> ShaideError {
-    ShaideError::not_found_route(uri.to_string())
+    ShaideError::not_found_route(uri.path().to_owned())
 }
+
+#[cfg(test)]
+mod knowledge_center_tests;
