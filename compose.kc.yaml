@@ -1,0 +1,255 @@
+# Explicit opt-in: -f compose.yaml -f compose.kc.yaml --profile server.
+# Requires Compose >= 2.24.4 (!override) and operator-supplied local/private images.
+# No private code, image builds, account registration or storage credentials in server.
+services:
+  shaide_server:
+    build: !reset null
+    pull_policy: never
+    ports: !override
+      - "127.0.0.1:${SHAIDE_SERVER_PORT:-8080}:${SHAIDE_SERVER_PORT:-8080}"
+    environment:
+      ADMIN_PASSWORD: !reset null
+      JWT_SECRET: !reset null
+      shaide_ROOT: /data
+      KNOWLEDGE_CENTER_URL: http://knowledge-center:8080
+      KNOWLEDGE_CENTER_ALLOW_LOCAL_HTTP: "true"
+      MCP_SERVERS: '[{"name":"knowledge-center","url":"http://kc-mcp:8080"}]'
+      MCP_COLLECTION_CONTEXT_TARGETS: '[{"server_id":"knowledge-center","url":"http://kc-mcp:8080","issuer":"shaide-local","kc_audience":"kc:knowledge-center","kid":"kc-context-v1","signing_key_file":"/run/secrets/private_key","gateway_token_file":"/run/secrets/gateway_token"}]'
+      MCP_COLLECTION_CONTEXT_ALLOW_LOCAL_HTTP: "true"
+    command: [sh, /opt/kc/entrypoint.sh, server]
+    volumes: !override
+      - kc-server-state:/data
+      - ./scripts/kc/entrypoint.sh:/opt/kc/entrypoint.sh:ro
+    secrets:
+      - source: kc_admin_password
+        target: admin_password
+      - source: kc_jwt_secret
+        target: jwt_secret
+      - source: kc_internal_token
+        target: internal_token
+      - source: kc_webhook_token
+        target: webhook_token
+      - source: kc_private_key
+        target: private_key
+      - source: kc_gateway_token
+        target: gateway_token
+    networks: [default, kc_api, kc_gateway, kc_notify_server]
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    init: true
+    stop_grace_period: 45s
+
+  # Generic vectordb retains its URL/service identity and is not KC's vectors.
+  vectordb:
+    ports: !reset []
+  control-panel:
+    user: "${KC_LOCAL_UID:?operator uid required}:${KC_LOCAL_GID:?operator gid required}"
+    ports: !reset []
+    environment:
+      SESSION_SECRET: !reset null
+    command: [sh, /opt/kc/entrypoint.sh, control-panel]
+    volumes:
+      - ./scripts/kc/entrypoint.sh:/opt/kc/entrypoint.sh:ro
+    secrets:
+      - source: kc_session_secret
+        target: session_secret
+  webapp:
+    ports: !reset []
+  # Legacy Docker gateway is independent of the server's signed KC gateway.
+  mcp-gateway:
+    ports: !reset []
+
+  knowledge-center:
+    image: ${SHAIDE_KC_IMAGE:?operator-supplied KC image required}
+    pull_policy: never
+    user: "${KC_LOCAL_UID:?operator uid required}:${KC_LOCAL_GID:?operator gid required}"
+    command: [sh, /opt/kc/entrypoint.sh, kc]
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      S3_FQDN: kc-rustfs
+      S3_PORT: "9000"
+      VECTOR_DB_URL: http://kc-qdrant:6334
+      SHAIDE_SERVER_URL: http://shaide_server:${SHAIDE_SERVER_PORT:-8080}
+      KC_SHAIDE_USERNAME: ${KC_SHAIDE_USERNAME:?dedicated role=user service account required}
+      RUSTFS_WEBHOOK_ARN: arn:rustfs:sqs:eu-central-1:shaide:webhook
+      KC_CONTEXT_ISSUER: shaide-local
+      KC_CONTEXT_TARGET: knowledge-center
+      KC_CONTEXT_AUDIENCE: kc:knowledge-center
+      KC_CONTEXT_MCP_AUDIENCE: kc-mcp:knowledge-center
+      KC_CONTEXT_KID: kc-context-v1
+      KC_CONTEXT_PUBLIC_KEY_FILE: /run/secrets/public_key
+      KC_MCP_SCOPED_TOKEN_FILE: /run/secrets/scoped_token
+      KC_CONTEXT_ALLOW_LOCAL_HTTP: "true"
+      XBERG_CACHE_DIR: /tmp/xberg
+    volumes:
+      - ./scripts/kc/entrypoint.sh:/opt/kc/entrypoint.sh:ro
+    secrets:
+      - source: kc_internal_token
+        target: internal_token
+      - source: kc_embedding_password
+        target: embedding_password
+      - source: kc_storage_access_key
+        target: storage_access_key
+      - source: kc_storage_secret_key
+        target: storage_secret_key
+      - source: kc_public_key
+        target: public_key
+      - source: kc_scoped_token
+        target: scoped_token
+    networks: [kc_api, kc_storage, kc_vectors, kc_mcp]
+    depends_on:
+      kc-rustfs:
+        condition: service_started
+      kc-qdrant:
+        condition: service_started
+    healthcheck:
+      test: [CMD, shaide_knowledge_center, healthcheck]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 2
+    init: true
+    stop_grace_period: 45s
+
+  kc-mcp:
+    image: ${SHAIDE_KC_MCP_IMAGE:?operator-supplied KC-MCP image required}
+    pull_policy: never
+    user: "${KC_LOCAL_UID:?operator uid required}:${KC_LOCAL_GID:?operator gid required}"
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      KNOWLEDGE_CENTER_URL: http://knowledge-center:8080
+      KC_CONTEXT_ISSUER: shaide-local
+      KC_CONTEXT_TARGET: knowledge-center
+      KC_CONTEXT_AUDIENCE: kc-mcp:knowledge-center
+      KC_CONTEXT_KC_AUDIENCE: kc:knowledge-center
+      KC_CONTEXT_KID: kc-context-v1
+      KC_CONTEXT_PUBLIC_KEY_FILE: /run/secrets/public_key
+      KC_MCP_GATEWAY_TOKEN_FILE: /run/secrets/gateway_token
+      KC_MCP_SCOPED_TOKEN_FILE: /run/secrets/scoped_token
+      KC_CONTEXT_ALLOW_LOCAL_HTTP: "true"
+      KC_MCP_ALLOWED_HOSTS: kc-mcp
+    secrets:
+      - source: kc_public_key
+        target: public_key
+      - source: kc_gateway_token
+        target: gateway_token
+      - source: kc_scoped_token
+        target: scoped_token
+    networks: [kc_gateway, kc_mcp]
+    depends_on:
+      knowledge-center:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 1
+    init: true
+    stop_grace_period: 35s
+
+  kc-rustfs:
+    image: ${SHAIDE_RUSTFS_IMAGE:?operator-supplied RustFS image required}
+    pull_policy: never
+    # Root can read 0600 host-bound secrets and initialize only its named volume.
+    # Only DAC_OVERRIDE reads operator-owned 0600 secrets; no Docker socket.
+    user: "0:0"
+    entrypoint: [sh, /opt/kc/entrypoint.sh, rustfs]
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: :9000
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+      RUSTFS_NOTIFY_ENABLE: "true"
+      RUSTFS_NOTIFY_WEBHOOK_ENABLE_SHAIDE: "true"
+      RUSTFS_NOTIFY_WEBHOOK_ENDPOINT_SHAIDE: http://kc-notifications:8080/v1/object-storage/event
+      RUSTFS_NOTIFY_WEBHOOK_QUEUE_DIR_SHAIDE: /data/notification-queue
+      RUSTFS_OUTBOUND_ALLOW_ORIGINS: http://kc-notifications:8080
+    volumes:
+      - kc-object-state:/data
+      - ./scripts/kc/entrypoint.sh:/opt/kc/entrypoint.sh:ro
+    secrets:
+      - source: kc_storage_access_key
+        target: storage_access_key
+      - source: kc_storage_secret_key
+        target: storage_secret_key
+      - source: kc_webhook_token
+        target: webhook_token
+    networks: [kc_storage, kc_notify_storage]
+    read_only: true
+    tmpfs: [/tmp, /logs]
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 2
+    init: true
+    stop_grace_period: 45s
+
+  kc-qdrant:
+    image: ${SHAIDE_KC_QDRANT_IMAGE:-qdrant/qdrant}
+    pull_policy: never
+    volumes:
+      - kc-vector-state:/qdrant/storage
+    networks: [kc_vectors]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1
+    stop_grace_period: 45s
+
+  # One fixed POST route bridges notification delivery, never S3 operations.
+  kc-notifications:
+    image: ${SHAIDE_KC_NOTIFICATION_IMAGE:-caddy:2}
+    pull_policy: never
+    user: "${KC_LOCAL_UID:?operator uid required}:${KC_LOCAL_GID:?operator gid required}"
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    environment:
+      SHAIDE_SERVER_PORT: ${SHAIDE_SERVER_PORT:-8080}
+    volumes:
+      - ./scripts/kc/notifications.Caddyfile:/etc/caddy/Caddyfile:ro
+    networks: [kc_notify_storage, kc_notify_server]
+    read_only: true
+    tmpfs: [/tmp, /data, /config]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    # Caddy binary has this file capability even when listening on port 8080.
+    cap_add: [NET_BIND_SERVICE]
+    mem_limit: 128m
+    cpus: 1
+    stop_grace_period: 35s
+
+networks:
+  kc_api: {internal: true}
+  kc_storage: {internal: true}
+  kc_vectors: {internal: true}
+  kc_gateway: {internal: true}
+  kc_mcp: {internal: true}
+  kc_notify_storage: {internal: true}
+  kc_notify_server: {internal: true}
+volumes:
+  kc-server-state:
+  kc-object-state:
+  kc-vector-state:
+secrets:
+  kc_admin_password: {file: '${KC_SECRETS_DIR:?protected credential directory required}/admin_password'}
+  kc_jwt_secret: {file: '${KC_SECRETS_DIR:?required}/jwt_secret'}
+  kc_session_secret: {file: '${KC_SECRETS_DIR:?required}/session_secret'}
+  kc_internal_token: {file: '${KC_SECRETS_DIR:?required}/internal_token'}
+  kc_webhook_token: {file: '${KC_SECRETS_DIR:?required}/webhook_token'}
+  kc_private_key: {file: '${KC_SECRETS_DIR:?required}/private.pem'}
+  kc_public_key: {file: '${KC_SECRETS_DIR:?required}/public.pem'}
+  kc_gateway_token: {file: '${KC_SECRETS_DIR:?required}/gateway_token'}
+  kc_scoped_token: {file: '${KC_SECRETS_DIR:?required}/scoped_token'}
+  kc_embedding_password: {file: '${KC_SECRETS_DIR:?required}/embedding_password'}
+  kc_storage_access_key: {file: '${KC_SECRETS_DIR:?required}/storage_access_key'}
+  kc_storage_secret_key: {file: '${KC_SECRETS_DIR:?required}/storage_secret_key'}

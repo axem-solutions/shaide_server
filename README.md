@@ -228,6 +228,10 @@ docker run -p 8080:8080 \
 
 ## Docker compose
 
+For optional local KC storage, indexing and signed MCP retrieval, see
+[the KC Compose operator guide](scripts/kc/README.md). Include `compose.kc.yaml`
+explicitly; ordinary startup does not require KC images or credentials.
+
 `compose.yaml` mirrors the k8s deployment and runs in one of two modes:
 
 ```sh
