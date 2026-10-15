@@ -26,7 +26,7 @@ chrono.workspace = true
 axum-prometheus = "0.10.0"
 uuid.workspace = true
 color-eyre = { version = "0.6.3" }
-reqwest.workspace = true
+reqwest = {workspace = true, features = ["stream"]}
 async-openai.workspace = true
 base64.workspace = true
 imagesize.workspace = true
@@ -70,3 +70,6 @@ ignored = ["openssl"]
 
 [dependencies.aws-lc-rs]
 version = "1.18.0"
+
+[dependencies.sha2]
+version = "0.10"

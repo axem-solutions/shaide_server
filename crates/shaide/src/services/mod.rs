@@ -8,3 +8,5 @@ pub mod platform_models;
 pub mod responses;
 
 pub mod collection_context;
+
+pub mod knowledge_center;
