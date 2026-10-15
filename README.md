@@ -18,6 +18,10 @@ The following table describes the current environment variables that we use.
 | PORT                  | Yes       | Server bind port (default: `8080`)                               |
 | VECTOR_DB_URL         | Yes       | Vector DB URL (default: `http://localhost:6334`)                 |
 | DATABASE_URL          | Yes       | Database URL used by SQLx tooling/migrations                     |
+| KNOWLEDGE_CENTER_URL | Yes | Optional fixed KC origin; see [upload orchestration](documentation/upload-lifecycle.md) |
+| KNOWLEDGE_CENTER_INTERNAL_TOKEN | With KC | Dedicated internal service bearer secret, at least 32 bytes |
+| S3_WEBHOOK_TOKEN | With KC | Dedicated notification bearer secret, distinct from the internal token and JWT secret |
+| KNOWLEDGE_CENTER_ALLOW_LOCAL_HTTP | Yes | Explicit local HTTP opt-in for KC (default: HTTPS required) |
 | MCP_SERVERS           | Yes       | Static MCP server list as JSON (unset: Kubernetes discovery), see [MCP servers](#mcp-servers) |
 | MCP_NAMESPACE         | Yes       | Namespace watched for MCP pods by Kubernetes discovery           |
 | MCP_LABEL_SELECTOR    | Yes       | Label selector of MCP pods for Kubernetes discovery              |
@@ -111,6 +115,10 @@ See [gateway collection context](documentation/collection-context-v1.md) for exp
 KC target participation, dedicated signing and service credentials, fresh collection
 access, targeted admin discovery and supported limits. Ordinary MCP behavior above
 remains the default.
+
+See [collection and upload orchestration](documentation/upload-lifecycle.md) for
+Control Panel API compatibility, KC-owned storage, upload limits and durable
+operation recovery. Ordinary startup remains available without KC.
 
 # Authentication
 

@@ -64,7 +64,17 @@ fn install_rustls_crypto_provider() {
 }
 
 pub async fn api_router(health_state: Arc<HealthState>, db: DbConn) -> Router {
+    let kc = get_environment_config()
+        .knowledge_center
+        .clone()
+        .map(crate::services::knowledge_center::KcClient::new)
+        .transpose()
+        .expect("KC transport configuration");
     Router::new()
+        .merge(crate::routes::knowledge_center::knowledge_center_router(
+            db.clone(),
+            kc,
+        ))
         .merge(crate::routes::health::health_router(health_state))
         .merge(crate::routes::trial::trial_router())
         .merge(crate::routes::completions::completion_router(db.clone()))

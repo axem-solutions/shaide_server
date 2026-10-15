@@ -133,6 +133,7 @@ pub struct RunTimeConfig {
     pub mcp_label_selector: String,
     pub mcp_servers: Option<Vec<StaticMcpServer>>,
     pub mcp_collection_context_targets: crate::services::collection_context::ContextTargets,
+    pub knowledge_center: Option<crate::services::knowledge_center::KcConfig>,
     pub is_trial: bool,
     pub webapp_url: Option<String>,
 }
@@ -181,6 +182,26 @@ impl RunTimeConfig {
                     &jwt_secret,
                 )
                 .unwrap_or_else(|error| panic!("MCP collection context configuration: {error}"));
+            let knowledge_center = crate::services::knowledge_center::KcConfig::parse(
+                env_map.var("KNOWLEDGE_CENTER_URL").ok().as_deref(),
+                env_map
+                    .var("KNOWLEDGE_CENTER_INTERNAL_TOKEN")
+                    .ok()
+                    .as_deref(),
+                env_map.var("S3_WEBHOOK_TOKEN").ok().as_deref(),
+                env_map
+                    .var("KNOWLEDGE_CENTER_ALLOW_LOCAL_HTTP")
+                    .ok()
+                    .as_deref()
+                    == Some("true"),
+            )
+            .unwrap_or_else(|e| panic!("KC configuration: {e}"));
+            if knowledge_center
+                .as_ref()
+                .is_some_and(|config| config.uses_token(&jwt_secret))
+            {
+                panic!("KC tokens must differ from JWT_SECRET");
+            }
             let is_trial = env_map
                 .var("TRIAL")
                 .map(|s| s.eq_ignore_ascii_case("true"))
@@ -198,6 +219,7 @@ impl RunTimeConfig {
                 mcp_label_selector,
                 mcp_servers,
                 mcp_collection_context_targets,
+                knowledge_center,
                 is_trial,
                 webapp_url,
             }
@@ -232,6 +254,24 @@ impl RunTimeConfig {
                     &jwt_secret,
                 )
                 .unwrap_or_else(|error| panic!("MCP collection context configuration: {error}"));
+            let knowledge_center = crate::services::knowledge_center::KcConfig::parse(
+                std::env::var("KNOWLEDGE_CENTER_URL").ok().as_deref(),
+                std::env::var("KNOWLEDGE_CENTER_INTERNAL_TOKEN")
+                    .ok()
+                    .as_deref(),
+                std::env::var("S3_WEBHOOK_TOKEN").ok().as_deref(),
+                std::env::var("KNOWLEDGE_CENTER_ALLOW_LOCAL_HTTP")
+                    .ok()
+                    .as_deref()
+                    == Some("true"),
+            )
+            .unwrap_or_else(|e| panic!("KC configuration: {e}"));
+            if knowledge_center
+                .as_ref()
+                .is_some_and(|config| config.uses_token(&jwt_secret))
+            {
+                panic!("KC tokens must differ from JWT_SECRET");
+            }
             let is_trial = std::env::var("TRIAL")
                 .map(|s| s.eq_ignore_ascii_case("true"))
                 .unwrap_or_default();
@@ -248,6 +288,7 @@ impl RunTimeConfig {
                 mcp_label_selector,
                 mcp_servers,
                 mcp_collection_context_targets,
+                knowledge_center,
                 is_trial,
                 webapp_url,
             }

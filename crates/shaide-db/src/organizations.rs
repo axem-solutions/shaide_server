@@ -85,7 +85,7 @@ async fn select_organization<'e>(
     .ok_or(ShaideDBError::NotFound(Resource::Organization))
 }
 
-async fn ensure_embedding_model_exists(
+pub(crate) async fn ensure_embedding_model_exists(
     transaction: &mut Transaction<'static, Sqlite>,
     embedding_model_id: i64,
 ) -> Result<(), ShaideDBError> {
@@ -105,7 +105,7 @@ async fn ensure_embedding_model_exists(
 /// Adds the users to the organization, skipping existing memberships. Fails
 /// without writing anything else if a user does not exist. Returns the number
 /// of new memberships.
-async fn insert_memberships(
+pub(crate) async fn insert_memberships(
     transaction: &mut Transaction<'static, Sqlite>,
     organization_id: i64,
     user_ids: &[i64],

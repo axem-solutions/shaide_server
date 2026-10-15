@@ -7,6 +7,7 @@ pub mod error;
 pub mod files;
 pub mod models;
 pub mod organizations;
+pub mod upload_lifecycle;
 mod users;
 
 use std::path::Path;
