@@ -8,6 +8,17 @@ use utoipa_swagger_ui::SwaggerUi;
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        crate::routes::knowledge_center::list,
+        crate::routes::knowledge_center::create,
+        crate::routes::knowledge_center::delete_collection,
+        crate::routes::knowledge_center::update,
+        crate::routes::knowledge_center::add_members,
+        crate::routes::knowledge_center::remove_members,
+        crate::routes::knowledge_center::presign,
+        crate::routes::knowledge_center::delete_file,
+        crate::routes::knowledge_center::stale_files,
+        crate::routes::knowledge_center::event,
+        crate::routes::knowledge_center::upload,
         crate::routes::health::health,
         crate::routes::trial::is_trial,
         crate::routes::users::login,
@@ -64,6 +75,17 @@ impl Modify for SecurityAddon {
             return;
         };
 
+        components.add_security_scheme(
+            "storage_notification_token",
+            SecurityScheme::Http(
+                HttpBuilder::new()
+                    .scheme(HttpAuthScheme::Bearer)
+                    .description(Some(
+                        "Dedicated storage notification secret; not an end-user JWT.",
+                    ))
+                    .build(),
+            ),
+        );
         components.add_security_scheme(
             "bearer_token",
             SecurityScheme::Http(
