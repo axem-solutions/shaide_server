@@ -7,6 +7,7 @@ pub mod error;
 pub mod files;
 pub mod models;
 pub mod organizations;
+mod refresh_tokens;
 pub mod upload_lifecycle;
 mod users;
 
@@ -14,6 +15,7 @@ use std::path::Path;
 
 use anyhow::Result;
 pub use models::{InsertModelDAO, ModelDAO};
+pub use refresh_tokens::RefreshTokenDAO;
 use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
 pub use users::{UserDAO, UserRole};
 

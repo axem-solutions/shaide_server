@@ -22,6 +22,8 @@ use utoipa_swagger_ui::SwaggerUi;
         crate::routes::health::health,
         crate::routes::trial::is_trial,
         crate::routes::users::login,
+        crate::routes::users::refresh_token,
+        crate::routes::users::logout,
         crate::routes::users::get_users,
         crate::routes::users::create_user,
         crate::routes::users::generate_users,

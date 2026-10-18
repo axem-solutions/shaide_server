@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO refresh_tokens (user_id, family_id, token_hash, expires_at)\n                SELECT user_id, family_id, ?, ? FROM refresh_tokens WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "c3d9e4e563d8ff54b6c31459f3f1b19c659132bc8e9dcbaa9356217844656fa9"
+}
