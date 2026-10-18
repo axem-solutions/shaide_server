@@ -19,7 +19,6 @@ use axum::{
     routing::{self},
 };
 use axum_prometheus::PrometheusMetricLayer;
-use axum_reverse_proxy::ReverseProxy;
 use shaide_common::path::get_db_file;
 use shaide_db::{
     DbConn, UserRole,
@@ -32,7 +31,7 @@ use crate::{
     config::get_environment_config,
     error_formatting::install_color_eyre,
     middlewares::{error_response::map_error_response, forward_headers_middleware},
-    routes::{fallback_404, metrics::metrics},
+    routes::{fallback_404, metrics::metrics, proxy::subpath_proxy},
     services::{
         auth::{AuthService, get_auth_service},
         health::HealthState,
@@ -123,7 +122,7 @@ pub async fn start_server() {
     );
 
     let mut app = router
-        .merge(ReverseProxy::new("/control-panel", &control_panel_uri))
+        .merge(subpath_proxy("/control-panel", &control_panel_uri))
         .layer(CorsLayer::permissive())
         .layer(prometheus_layer)
         .route(
@@ -133,7 +132,7 @@ pub async fn start_server() {
         .fallback(fallback_404);
 
     if let Some(webapp_url) = &environment_config.webapp_url {
-        app = app.merge(ReverseProxy::new("/app", webapp_url));
+        app = app.merge(subpath_proxy("/app", webapp_url));
     }
 
     let app = app
