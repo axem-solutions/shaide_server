@@ -133,6 +133,22 @@ curl -X POST http://localhost:8080/v1/login \
 Send the returned `access_token` to authenticated endpoints as
 `Authorization: Bearer <access_token>`.
 
+The login response also carries a `refresh_token`, valid for 30 days or until
+the account expires. Exchange it for a new access token instead of storing the
+password:
+
+```sh
+curl -X POST http://localhost:8080/v1/token/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refresh_token":"<refresh_token>"}'
+```
+
+Every exchange returns a new `refresh_token` and invalidates the one sent, so
+clients must store the new one. Presenting an invalidated token again more than
+30 seconds after it was exchanged revokes the whole login session, because it
+means the token was copied. `POST /v1/logout` with the same body revokes the
+session explicitly. Only a SHA-256 digest of each refresh token is stored.
+
 Every authenticated request reloads the account from the database. Role changes,
 regular-user account expiry and account deletion therefore apply to existing
 tokens. Admin routes accept only admins; regular-user routes accept only active
