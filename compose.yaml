@@ -63,6 +63,12 @@ services:
     ports:
       # Host port 3001 is where a natively running shaide server expects it.
       - "3001:8787"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # The shaide server the webapp signs users in to, resolved from inside
+      # this container. Same address as for the control panel below.
+      SHAIDE_SERVER_URL: http://${SHAIDE_SERVER_FQDN:-shaide_server}:${SHAIDE_SERVER_PORT:-8080}
 
   vectordb:
     image: qdrant/qdrant
