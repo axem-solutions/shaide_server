@@ -40,7 +40,7 @@ def ok(url, **kwargs):
 
 def scenario(name):
     (DEMO / "fixtures/scenario.json").write_text(json.dumps({"scenario": name}) + "\n")
-    subprocess.run(COMPOSE + ["restart", "shaide_server"], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(COMPOSE + ["restart", "shaide-server"], check=True, stdout=subprocess.DEVNULL)
     for _ in range(60):
         try:
             if request(SERVER + "/v1/platform-models", session=ANON)[0] == 401:

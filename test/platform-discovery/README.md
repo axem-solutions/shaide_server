@@ -63,7 +63,7 @@ For example:
 
 ```sh
 printf '%s\n' '{"scenario":"missing-metadata"}' > fixtures/scenario.json
-docker compose restart shaide_server
+docker compose restart shaide-server
 ```
 
 Then click **Refresh available models**. Restarting clears the server's
@@ -77,7 +77,7 @@ The fixture definitions and network aliases are in `mock.py` and `compose.yaml`.
 ```sh
 python3 smoke.py
 docker compose ps
-docker compose logs --tail=40 platform-mock shaide_server control-panel
+docker compose logs --tail=40 platform-mock shaide-server control-panel
 docker compose down
 ```
 
@@ -90,5 +90,5 @@ removes the models it added, and leaves an ordinary test user in the isolated
 database with a one-day expiry. `down` preserves data for the next start.
 
 The mock's self-signed certificate is regenerated at mock startup. If you
-restart or recreate `platform-mock` alone, also restart `shaide_server` so it
+restart or recreate `platform-mock` alone, also restart `shaide-server` so it
 reloads the CA. None of these commands affect the existing Compose project.

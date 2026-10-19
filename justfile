@@ -15,9 +15,10 @@ check:
 
 # Start what a natively running shaide server needs; optional profiles: app, mcp
 [env("SHAIDE_SERVER_FQDN", "host.docker.internal")]
+[env("SHAIDE_SERVER_PORT", "8080")]
 services-up *profiles:
     # Free the server port in case the containerized server is still running.
-    docker compose --profile server stop shaide_server
+    docker compose --profile server stop shaide-server
     docker compose {{ prepend("--profile ", profiles) }} up -d --remove-orphans
 
 # Stop every compose service, including the optional ones

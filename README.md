@@ -252,7 +252,7 @@ explicitly; ordinary startup does not require KC images or credentials.
 
 ```sh
 # Everything the shaide server depends on, to run the server natively
-SHAIDE_SERVER_FQDN=host.docker.internal docker compose up -d
+SHAIDE_SERVER_FQDN=host.docker.internal SHAIDE_SERVER_PORT=8080 docker compose up -d
 cargo run
 
 # Every service in containers, the shaide server included
@@ -263,6 +263,11 @@ docker compose --profile server up -d --build
 gateway (`mcp` profile) are optional: pass the profile names to the recipes,
 e.g. `just dev app mcp`, or `--profile app` to compose. When running the
 containerized server with the webapp, also set `WEBAPP_URL=http://webapp:8787`.
+
+As on k8s, the containers reach the containerized server at
+`http://shaide-server` (port 80). On the host it is published at
+`SHAIDE_SERVER_HOST_PORT` (default `8080`). `SHAIDE_SERVER_FQDN` and
+`SHAIDE_SERVER_PORT` point the containers at a natively running server instead.
 
 The containerized server is built from the `dev` Docker target, which adds
 `azure-cli`. It keeps its data in `~/.config/axem-docker`, separate from the

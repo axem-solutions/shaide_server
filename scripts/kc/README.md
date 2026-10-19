@@ -51,7 +51,7 @@ shell function ensures every command uses the same project, overlay and settings
 
 ```sh
 export KC_CONFIG='<new-private-directory>/config.env'
-export SHAIDE_SERVER_PORT=18081  # choose an unused port; do not restart another stack
+export SHAIDE_SERVER_HOST_PORT=18081  # choose an unused port; do not restart another stack
 kc_compose() {
   docker compose --env-file "$KC_CONFIG" -p shaide-kc-local \
     -f compose.yaml -f compose.kc.yaml --profile server "$@"
