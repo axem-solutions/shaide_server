@@ -118,18 +118,18 @@ class ComposeTests(unittest.TestCase):
     def test_only_server_has_host_ports(self):
         m = self.model()
         for name, svc in m['services'].items():
-            if name != 'shaide_server': self.assertFalse(svc.get('ports'), name)
-        self.assertEqual(m['services']['shaide_server']['ports'][0]['host_ip'], '127.0.0.1')
+            if name != 'shaide-server': self.assertFalse(svc.get('ports'), name)
+        self.assertEqual(m['services']['shaide-server']['ports'][0]['host_ip'], '127.0.0.1')
     def test_storage_and_vectors_are_isolated_from_server_and_mcp(self):
         m = self.model(); s = m['services']
         for backend in ['kc-rustfs', 'kc-qdrant']:
-            for facade in ['shaide_server', 'kc-mcp']:
+            for facade in ['shaide-server', 'kc-mcp']:
                 self.assertTrue(set(s[backend]['networks']).isdisjoint(s[facade]['networks']))
         self.assertNotIn('default', s['knowledge-center']['networks'])
         for name, net in m['networks'].items():
             if name != 'default': self.assertTrue(net['internal'], name)
     def test_server_has_no_storage_credentials_or_mounts(self):
-        m = self.model(); s = m['services']['shaide_server']
+        m = self.model(); s = m['services']['shaide-server']
         self.assertFalse(any(k.startswith(('S3_', 'RUSTFS_', 'AWS_')) and k != 'S3_WEBHOOK_TOKEN' for k in s['environment']))
         self.assertFalse(any('storage' in x['source'] for x in s['secrets']))
     def test_compose_output_contains_no_secret_values(self):
@@ -138,17 +138,19 @@ class ComposeTests(unittest.TestCase):
             self.assertNotIn((self.dest / n).read_text().strip(), output)
     def test_named_state_and_no_build_contract(self):
         m = self.model(); s = m['services']
-        for service in ['shaide_server', 'kc-rustfs', 'kc-qdrant']:
+        for service in ['shaide-server', 'kc-rustfs', 'kc-qdrant']:
             self.assertTrue(any(v['type'] == 'volume' for v in s[service]['volumes']))
         for name in ['knowledge-center', 'kc-mcp', 'kc-rustfs']:
             self.assertNotIn('build', s[name]); self.assertEqual(s[name]['pull_policy'], 'never')
-        self.assertEqual(s['shaide_server']['environment']['VECTOR_DB_URL'], 'http://vectordb:6334')
+        self.assertEqual(s['shaide-server']['environment']['VECTOR_DB_URL'], 'http://vectordb:6334')
     def test_signed_context_and_notification_trust(self):
-        s = self.model()['services']; env = s['shaide_server']['environment']
+        s = self.model()['services']; env = s['shaide-server']['environment']
         targets = json.loads(env['MCP_COLLECTION_CONTEXT_TARGETS'])
         self.assertEqual(targets[0]['url'], 'http://kc-mcp:8080')
         self.assertEqual(env['KNOWLEDGE_CENTER_URL'], 'http://knowledge-center:8080')
         self.assertIn('kc-notifications:8080/v1/object-storage/event', s['kc-rustfs']['environment']['RUSTFS_NOTIFY_WEBHOOK_ENDPOINT_SHAIDE'])
         self.assertEqual(s['knowledge-center']['environment']['RUSTFS_WEBHOOK_ARN'], 'arn:rustfs:sqs:eu-central-1:shaide:webhook')
+        self.assertEqual(s['knowledge-center']['environment']['SHAIDE_SERVER_URL'], 'http://shaide-server')
+        self.assertEqual(s['shaide-server']['ports'][0]['target'], 80)
 
 if __name__ == '__main__': unittest.main()
