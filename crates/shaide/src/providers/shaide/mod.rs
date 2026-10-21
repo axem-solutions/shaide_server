@@ -1,6 +1,7 @@
 pub mod chat;
 pub mod completion;
 pub mod embedding;
+pub mod router_retry;
 
 use reqwest::Client as ReqwestClient;
 use thiserror::Error;
