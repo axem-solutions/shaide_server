@@ -4,7 +4,7 @@ use shaide_db::embedding_models::EmbeddingModelDao;
 use tracing::debug;
 
 use crate::{
-    providers::shaide::{AxemClient, ShaideProviderError},
+    providers::shaide::{AxemClient, ShaideProviderError, router_retry},
     services::embedding::{EmbeddedSnippet, EmbeddedSnippets, EmbeddingOutput},
 };
 
@@ -43,12 +43,12 @@ impl AxemClient {
             input: texts,
             model: embedding_model.name.to_string(),
         };
-        let response = self
-            .client
-            .post(embedding_model.url.to_string())
-            .json(&request)
-            .send()
-            .await?;
+        let response = router_retry::send(|| {
+            self.client
+                .post(embedding_model.url.to_string())
+                .json(&request)
+        })
+        .await?;
         let status_code = response.status();
         let response_body = response.text().await?;
         debug!(

@@ -1,5 +1,5 @@
 use crate::{
-    providers::shaide::{AxemClient, ShaideProviderError},
+    providers::shaide::{AxemClient, ShaideProviderError, router_retry},
     routes::completions::{NativeCompletionPayload, ProviderCompletionResponse},
 };
 
@@ -9,12 +9,13 @@ impl AxemClient {
         url: &str,
         payload: &NativeCompletionPayload,
     ) -> Result<ProviderCompletionResponse, ShaideProviderError> {
-        let request = self
-            .client
-            .post(url)
-            .header("Content-Type", "application/json; charset=utf-8")
-            .json(payload);
-        let response = request.send().await?;
+        let response = router_retry::send(|| {
+            self.client
+                .post(url)
+                .header("Content-Type", "application/json; charset=utf-8")
+                .json(payload)
+        })
+        .await?;
         let status_code = response.status();
         let body = response.text().await?;
         if !status_code.is_success() {
