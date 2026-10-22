@@ -5,7 +5,7 @@ use shaide_db::ModelDAO;
 use tokio_stream::StreamExt;
 
 use crate::{
-    providers::shaide::{AxemClient, ShaideProviderError},
+    providers::shaide::{AxemClient, ShaideProviderError, router_retry},
     utils::openai_stream_handler,
 };
 
@@ -16,15 +16,31 @@ impl AxemClient {
         model: &ModelDAO,
     ) -> Result<ShaideChatCompletionResponseStream, ShaideProviderError> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-        let mut event_source = {
-            self.client
+        let mut attempt = 0;
+        let (event_source, first_event) = loop {
+            let mut event_source = self
+                .client
                 .post(&model.chat_completions_endpoint)
                 .json(&request)
                 .eventsource()
-                .unwrap()
+                .unwrap();
+            let first_event: Option<Result<Event, reqwest_eventsource::Error>> =
+                event_source.next().await;
+
+            // The llm-d router answers before streaming starts, so a rejected
+            // request has not produced any output yet and can be sent again.
+            if let Some(Err(reqwest_eventsource::Error::InvalidStatusCode(_, response))) =
+                &first_event
+                && router_retry::should_retry(attempt, response)
+            {
+                event_source.close();
+                tokio::time::sleep(router_retry::retry_delay(attempt)).await;
+                attempt += 1;
+                continue;
+            }
+
+            break (event_source, first_event);
         };
-        let first_event: Option<Result<Event, reqwest_eventsource::Error>> =
-            event_source.next().await;
         match first_event {
             Some(Err(reqwest_eventsource::Error::InvalidStatusCode(status_code, response))) => {
                 // Read the response body to get the actual error message
